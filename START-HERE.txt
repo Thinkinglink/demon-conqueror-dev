@@ -1,0 +1,5 @@
+1. Install Claude Code (needs Node.js 18+):   npm install -g @anthropic-ai/claude-code
+2. Unzip this folder somewhere, then open a terminal in it:   cd demon-conqueror
+3. Start Claude Code:   claude
+4. First message:  "Read CLAUDE.md. We are continuing Demon Conqueror 13.10.0. Next I want ..."
+Keep the PRIVATE-signing-key folder private. Do not put it on GitHub.
