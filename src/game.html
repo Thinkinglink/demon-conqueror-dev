@@ -1435,6 +1435,7 @@ const FRUITS = [
   ['celestial', 'Celestial', 'mythical', 'Natural', '#8ad8ff', 11000000, 'Bend gravity like the heavens and fire celestial crystals at your enemies.'],
   ['overgrown', 'Overgrown', 'mythical', 'Natural', '#2e8a2a', 7000000, 'Vine evolved: an ancient forest grows wherever you fight.'],
   ['cardboard', 'Cardboard', 'legendary', 'Natural', '#c8945a', 3500000, 'Origami evolved: folding armour, crushing crates and a cardboard plane.'],
+  ['reckless', 'Reckless', 'mythical', 'Natural', '#c8102a', 9500000, 'Every hit fills a Berserk meter. Up to double damage as it rises; at full rage every move becomes a rage move.'],
 ].map(([id, name, rarity, type, color, price, desc]) => ({ id, name, rarity, type, color, price, desc }));
 const FRUIT_BY_ID = Object.fromEntries(FRUITS.map(f => [f.id, f]));
 // 12.68: fruits made only by upgrading another fruit at Mastery 400 (Fruit Masters, First Sea)
@@ -4056,6 +4057,7 @@ function useSkillInner(tool, key) {
   const d = player.facing, dmg = sk.mult ? playerDamage(tool, sk.mult) : 0, color = sk.awk ? '#ff7bd5' : tool.color;
   player.attackAnim = player.attackDur = .25; player.castT = time + .4; player.castC = color;
   switch (sk.kind) {
+    case 'reckless': reckSkill1325(tool, key, sk, d, color); break;
     case 'dash': player.dash = { t: 0, dur: 0.2, vx: d.x * sk.dist / 0.2, vy: d.y * sk.dist / 0.2, dmg, hit: new Set(), color }; player.iframes = Math.max(player.iframes, 0.28); break;
     case 'burst': addAoe({ x: player.x + d.x * (sk.ahead || 0), y: player.y + d.y * (sk.ahead || 0), r: sk.radius, delay: sk.anim ? .2 : 0.12, dmg, color, knock: sk.knock || 420, stun: sk.stun, follow: !sk.ahead, style: sk.style || 'burst', fx: sk.fx || castFx }); if (sk.anim) player.formAnim = { kind: sk.anim, t: 0 }; break;
     case 'projectile': spawnProjectile({ x: player.x + d.x * 22, y: player.y + d.y * 22, vx: d.x * sk.speed, vy: d.y * sk.speed, r: sk.radius, dmg, life: sk.life || 0.9, color, owner: 'player', pierce: !!sk.pierce, explode: sk.explode || 0, root: sk.root || 0, knock: 300, big: true, style: sk.style }); break;
@@ -9966,7 +9968,7 @@ toggleBuso = function () { const was = player.buso; _toggleBuso1320(); if (playe
 function vfxTick1320() {
   const dt = Math.min(.1, Math.max(0, time - vfxT1320)); vfxT1320 = time;
   for (const p of projectiles) if (p.owner === 'player' && Math.random() < .7) fx.sparks.push({ x: p.x + rand(-3, 3), y: p.y + rand(-3, 3), z: (p.h ?? 0) * 0 + rand(18, 30), vx: -p.vx * .05, vy: -p.vy * .05, vz: rand(-5, 5), t: 0, life: .28, color: p.color || '#ffffff' });   // trails
-  for (let i = VFX1320.length - 1; i >= 0; i--) { const v = VFX1320[i]; if (v.delay > 0) { v.delay -= dt; continue; } v.t += dt; const k = v.t / v.life; if (k >= 1) { VFX1320.splice(i, 1); continue; }
+  for (let i = VFX1320.length - 1; i >= 0; i--) { const v = VFX1320[i]; if (v.delay > 0) { v.delay -= dt; continue; } v.t += dt; const k = v.t / v.life; if (k >= 1) { VFX1320.splice(i, 1); continue; } if (v.k === 'spike' || v.k === 'pillar' || v.k === 'domeT' || v.k === 'beam') continue;   // drawn by 13.25
     const m = fxMesh(v, () => {
       if (v.k === 'slash') return new THREE.Mesh(v.big ? RIB1320.b : RIB1320.s, addMat1320(v.c, VTEX1320.slash));
       if (v.k === 'star' || v.k === 'flash') return new THREE.Sprite(new THREE.SpriteMaterial({ map: VTEX1320.star, color: v.c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
@@ -10122,6 +10124,110 @@ function sculpt1323(f, shape) {
   }
   g.computeVertexNormals(); return C[key] = g;
 }
+// ================= 13.25: the Reckless fruit. A Berserk meter fed by damage; up to 2x damage at 99%; at 100% every move turns into its rage form =================
+Object.assign(FRUIT_KITS, { reckless: {
+  Z: { name: 'Wild Rush', kind: 'reckless', req: 1, cd: 4, mult: .8 },
+  X: { name: 'Pain Reflection', kind: 'reckless', req: 25, cd: 7, mult: 1.6 },
+  C: { name: 'Crimson Rupture', kind: 'reckless', req: 50, cd: 8, mult: 2.4 },
+  F: { name: 'Reckless Assault', kind: 'reckless', req: 75, cd: 10, mult: 2.2 },
+  V: { name: 'Overwhelming Cataclysm', kind: 'reckless', req: 100, cd: 18, mult: 1.2 },
+} });
+FRUIT_M1.reckless = Object.assign({}, M1_MELEE, { interval: .2, range: 40, radius: 32, mults: [.12, .12, .12, .18] });
+Object.assign(LOOK1312, { reckless: ['lobed', 'none', '#ffd0d0', 'horns', '#3a0a0a'] }); Object.assign(FACE1318, { reckless: ['glare', 'fangs', '#ff1a1a'] });
+Object.assign(SIG1316, { reckless: [['spikesBack', '#3a0a0a'], ['crest', '#ff2a2a'], ['aura', '#ff1a1a']] }); Object.assign(SCULPT1323, { reckless: [.1, 0, 0, 2] });
+Object.assign(EMB1313, { rageClaw: [['M50 6L62 30L88 20L74 46L96 58L68 62L76 90L50 72L24 90L32 62L4 58L26 46L12 20L38 30Z', 'b'], ['M30 84C40 62 46 40 48 16C52 40 48 64 38 88Z', 'a'], ['M46 88C56 66 60 44 62 20C66 44 62 68 54 90Z', 'a'], ['M62 90C70 70 74 50 76 28C80 50 76 72 70 92Z', 'a']] });
+FRUIT_STICK1313.reckless = 'rageClaw'; FRUIT_STICKC1313.reckless = ['#c8102a', '#2a0505'];
+const RK = { rage: 0, berserk: false, hits: 0, pend: [], trail: [], dome: null, laser: null, slam: null, assault: null, cata: null, tool: null, ui: null, t: 0 };
+const reckOn = () => GameData.state && GameData.state.currentFruit === 'reckless';
+function rageSet1325(v) { const was = RK.berserk; RK.rage = clamp(v, 0, 100); RK.berserk = RK.rage >= 100;
+  if (RK.berserk && !was) { showBanner('BERSERK', 'Your rage overflows. Every move becomes its rage form.', 2600); for (let i = 0; i < 3; i++) vfx1320({ k: 'ring', x: player.x, y: player.y, z: player.z + 1, c: '#ff1a1a', life: .5, s: 7 + i * 3, delay: i * .1 }); fx.shake = Math.min(2, fx.shake + 1); }
+  if (!RK.berserk && was) showToast('The Berserk State fades.'); }
+// the passive: up to 2x damage at 99% (and in the Berserk State)
+const _playerDamage1325 = playerDamage;
+playerDamage = function (tool, mult) { const d = _playerDamage1325(tool, mult); return tool && tool.fruitId === 'reckless' ? d * (1 + Math.min(RK.rage, 99) / 99) : d; };
+// damage fills the meter and counts as a hit for the drain check
+const _hitEnemy1325 = hitEnemy;
+hitEnemy = function (e, dmg, fromX, fromY, knock, stun) { const hp = e.hp; _hitEnemy1325(e, dmg, fromX, fromY, knock, stun); if (!reckOn() || e.hp === hp) return; RK.hits++;
+  rageSet1325(RK.rage + Math.min(6, (hp - Math.max(0, e.hp)) / Math.max(1, baseDamage(GameData.state.level)) * 14)); };
+const rkAlive = () => World.enemies.filter(e => e.dead <= 0 && Math.abs((e.z ?? player.z) - player.z) < 14);
+const rkNear = (x, y, r) => rkAlive().filter(e => Math.hypot(e.x - x, e.y - y) < r + (e.size || 10));
+const rkNearest = r => { let b = null, bd = r; for (const e of rkAlive()) { const d = Math.hypot(e.x - player.x, e.y - player.y); if (d < bd) { bd = d; b = e; } } return b; };
+const rkHit = (e, mult, knock = 200, stun = 0) => hitEnemy(e, playerDamage(RK.tool, mult), player.x, player.y, knock, stun);
+const rkMiss = (win) => RK.pend.push({ until: time + win, h: RK.hits });
+// M1: red aura fists, or giant red aura claws in the Berserk State
+const _m1Inner1325 = doM1Inner;
+doM1Inner = function (tool) {
+  if (!tool || tool.fruitId !== 'reckless' || player.transform) return _m1Inner1325(tool);
+  aim(); RK.tool = tool; const f = player.facing, B = RK.berserk; player.m1Cd = B ? .3 : .2; player.attackAnim = player.attackDur = .18; player.swingSide = -player.swingSide;
+  const i = player.combo % 4, last = i === 3; player.combo++; player.comboTimer = .9; const range = B ? 75 : 40, rad = B ? 95 : 32, hx = player.x + f.x * range, hy = player.y + f.y * range;
+  for (const e of rkNear(hx, hy, rad)) { rkHit(e, B ? (last ? 9 : 6) : (last ? .18 : .12), B ? 420 : (last ? 360 : 140), B ? .35 : 0); if (B) e.block = 0; }
+  const a = Math.atan2(f.x, f.y);
+  if (B) { for (let k = 0; k < 3; k++) vfx1320({ k: 'slash', x: player.x, y: player.y, z: player.z + 2.6 + k * .5, a: a + (k - 1) * .15, side: player.swingSide, c: k === 1 ? '#ffd0d0' : '#ff1a1a', big: true, life: .28, delay: k * .03 }); fx.shake = Math.min(1.6, fx.shake + .4); }
+  else vfx1320({ k: 'ring', x: hx, y: hy, z: player.z + 3, c: '#ff3a3a', life: .18, s: last ? 2.6 : 1.4, up: true, a });
+};
+// the five moves
+function reckSkill1325(tool, key, sk, d, color) {
+  RK.tool = tool; const B = RK.berserk, a = Math.atan2(d.x, d.y);
+  if (key === 'Z') {
+    if (!B) { player.dash = { t: 0, dur: .18, vx: d.x * 170 / .18, vy: d.y * 170 / .18, dmg: playerDamage(tool, .8), hit: new Set(), color: '#ff2a2a' }; player.iframes = Math.max(player.iframes, .22); rkMiss(.6); return; }
+    const x0 = player.x, y0 = player.y; for (let i = 1; i <= 16; i++) { const px = player.x, py = player.y; player.x = x0 + d.x * 340 * i / 16; player.y = y0 + d.y * 340 * i / 16; if (terrainGround(player.x, player.y, player.z) > player.z + STEP_UP || collideStructs(player, 16, player.z)) { player.x = px; player.y = py; break; } }
+    for (let i = 0; i <= 10; i++) RK.trail.push({ x: x0 + (player.x - x0) * i / 10, y: y0 + (player.y - y0) * i / 10, until: time + 3, next: 0 });
+    vfx1320({ k: 'ring', x: x0, y: y0, z: player.z + .2, c: '#ff1a1a', life: .4, s: 4 }); vfx1320({ k: 'ring', x: player.x, y: player.y, z: player.z + .2, c: '#ff1a1a', life: .4, s: 4 }); player.iframes = Math.max(player.iframes, .3); rkMiss(3.2); return; }
+  if (key === 'X') {
+    if (!B) { for (const e of rkNear(player.x, player.y, 170)) rkHit(e, 1.6, 260, .6); for (let i = 0; i < 14; i++) { const t = i / 14 * TAU; vfx1320({ k: 'spike', x: player.x + Math.cos(t) * 120, y: player.y + Math.sin(t) * 120, z: player.z, c: '#e01a1a', life: .55, delay: i * .015 }); } vfx1320({ k: 'ring', x: player.x, y: player.y, z: player.z + .2, c: '#ff3a3a', life: .4, s: 7 }); fx.shake = Math.min(1.5, fx.shake + .5); rkMiss(.5); return; }
+    RK.dome = { x: player.x, y: player.y, until: time + 4, next: 0 }; showToast('Pain Reflection: rage dome'); fx.shake = Math.min(2, fx.shake + 1); rkMiss(4.2); return; }
+  if (key === 'C') {
+    if (!B) { spawnProjectile({ x: player.x + d.x * 22, y: player.y + d.y * 22, vx: d.x * 900, vy: d.y * 900, r: 14, dmg: playerDamage(tool, 2.4), life: .6, color: '#ff1a1a', owner: 'player', explode: 80, knock: 320 }); rkMiss(.8); return; }
+    RK.laser = { until: time + 2.6, next: 0 }; rkMiss(2.9); return; }
+  if (key === 'F') {
+    if (!B) { player.vz = 140; player.grounded = false; RK.slam = { t0: time }; player.iframes = Math.max(player.iframes, .4); rkMiss(2); return; }
+    const targets = rkNear(player.x, player.y, 420).slice(0, 8); player.vz = 120; player.grounded = false; RK.assault = { list: targets, i: 0, next: time + .25, done: false, cx: player.x, cy: player.y }; player.iframes = Math.max(player.iframes, 2.5); rkMiss(2.6); return; }
+  if (key === 'V') {
+    const tg = rkNearest(B ? 900 : 480); if (!B) { RK.cata = { mode: 'base', e: tg, x: tg ? tg.x : player.x + d.x * 120, y: tg ? tg.y : player.y + d.y * 120, start: time + .6, n: 0 }; vfx1320({ k: 'rune', x: player.x, y: player.y, z: player.z + .12, c: '#ff1a1a', life: .7, s: 6 }); rkMiss(2); return; }
+    RK.cata = { mode: 'berserk', e: tg, start: time + .15, n: 0 }; player.iframes = Math.max(player.iframes, 2.4); rkMiss(3); return; }
+}
+function reckTick1325() {
+  const ui = RK.ui ||= (() => { const el = document.createElement('div'); el.id = 'rage1325'; el.style.cssText = 'position:absolute;left:50%;bottom:118px;transform:translateX(-50%);width:min(340px,70vw);z-index:7;pointer-events:none;font:800 16px Rajdhani,system-ui;color:#fff;text-shadow:0 2px 3px #000;letter-spacing:.06em';
+    el.innerHTML = '<div style="display:flex;justify-content:space-between"><span id="rageT">RAGE</span><span id="rageP">0%</span></div><div style="height:14px;border-radius:8px;background:rgba(20,0,0,.7);border:2px solid #000;overflow:hidden"><div id="rageF" style="height:100%;width:0;background:linear-gradient(90deg,#7a0000,#ff1a1a);transition:width .12s"></div></div>';
+    (document.getElementById('game') || document.body).appendChild(el); return el; })();
+  const on = reckOn() && !player.dead; ui.style.display = on ? '' : 'none'; if (!on) return;
+  ui.querySelector('#rageF').style.width = RK.rage + '%'; ui.querySelector('#rageP').textContent = Math.floor(RK.rage) + '%'; ui.querySelector('#rageT').textContent = RK.berserk ? 'BERSERK' : 'RAGE';
+  ui.querySelector('#rageF').style.boxShadow = RK.berserk ? `0 0 ${10 + Math.sin(time * 20) * 6}px #ff1a1a` : 'none';
+  // drain only when a move found nothing to hit
+  for (let i = RK.pend.length - 1; i >= 0; i--) { const p = RK.pend[i]; if (RK.hits > p.h) { RK.pend.splice(i, 1); continue; } if (time > p.until) { RK.pend.splice(i, 1); rageSet1325(RK.rage - 8); } }
+  // the violent red aura of the Berserk State
+  if (RK.berserk) for (let i = 0; i < 3; i++) fx.sparks.push({ x: player.x + rand(-20, 20), y: player.y + rand(-20, 20), z: rand(0, 40), vx: rand(-30, 30), vy: rand(-30, 30), vz: rand(60, 160), t: 0, life: .45, color: i ? '#ff1a1a' : '#2a0000' });
+  // Wild Rush trail: explodes on anyone who steps in it
+  for (let i = RK.trail.length - 1; i >= 0; i--) { const T = RK.trail[i]; if (time > T.until) { RK.trail.splice(i, 1); continue; } if (Math.random() < .3) fx.sparks.push({ x: T.x + rand(-10, 10), y: T.y + rand(-10, 10), z: rand(0, 10), vx: 0, vy: 0, vz: rand(40, 90), t: 0, life: .4, color: '#ff2a1a' });
+    if (time > T.next) { const hit = rkNear(T.x, T.y, 34); if (hit.length) { T.next = time + .45; for (const e of hit) rkHit(e, 1.5, 120, .8); vfx1320({ k: 'star', x: T.x, y: T.y, z: player.z + 2, c: '#ff3a1a', life: .2, s: 3 }); } } }
+  // Pain Reflection dome: damage over time and heavy slow
+  if (RK.dome) { const D = RK.dome; if (time > D.until) RK.dome = null; else { vfx1320({ k: 'domeT', x: D.x, y: D.y, z: player.z, c: '#ff1a1a', life: .05, s: 260 }); if (time > D.next) { D.next = time + .5; for (const e of rkNear(D.x, D.y, 260)) { rkHit(e, 1.2, 0, .3); e.vx *= .2; e.vy *= .2; } } } }
+  // Crimson Rupture laser: tracks the nearest target, then a big blast
+  if (RK.laser) { const L = RK.laser, tg = rkNearest(700); if (tg) { vfx1320({ k: 'beam', x: player.x, y: player.y, x2: tg.x, y2: tg.y, z: player.z + 3.4, c: '#ff1a1a', life: .06 }); player.facing = { x: (tg.x - player.x) / (Math.hypot(tg.x - player.x, tg.y - player.y) || 1), y: (tg.y - player.y) / (Math.hypot(tg.x - player.x, tg.y - player.y) || 1) }; if (time > L.next) { L.next = time + .15; rkHit(tg, 1.0, 40, .2); } L.last = tg; }
+    if (time > L.until) { const c = L.last || { x: player.x + player.facing.x * 200, y: player.y + player.facing.y * 200 }; for (const e of rkNear(c.x, c.y, 220)) rkHit(e, 8, 600, 1); for (let i = 0; i < 3; i++) vfx1320({ k: 'ring', x: c.x, y: c.y, z: player.z + .3, c: i % 2 ? '#ffd0d0' : '#ff1a1a', life: .6, s: 9 + i * 4, delay: i * .08 }); vfx1320({ k: 'star', x: c.x, y: c.y, z: player.z + 4, c: '#ff3a1a', life: .5, s: 12 }); fx.shake = 2.5; RK.laser = null; } }
+  // Reckless Assault (base): slam back down with a shockwave
+  if (RK.slam && time - RK.slam.t0 > .3) { if (player.grounded) { for (const e of rkNear(player.x, player.y, 180)) rkHit(e, 2.2, 520, .5); vfx1320({ k: 'ring', x: player.x, y: player.y, z: player.z + .2, c: '#ff1a1a', life: .45, s: 8 }); sparkBurst(player.x, player.y, 2, 20, '#d8a898', 200, .5); fx.shake = Math.min(2, fx.shake + 1); RK.slam = null; } else player.vz = Math.min(player.vz, -260); }
+  // Reckless Assault (berserk): flash to each enemy, slash it in mid air, then one final slash pulls them all together
+  if (RK.assault && time > RK.assault.next) { const A = RK.assault;
+    if (A.i < A.list.length) { const e = A.list[A.i++]; if (e && e.dead <= 0) { player.x = e.x - player.facing.x * 30; player.y = e.y - player.facing.y * 30; rkHit(e, 5, 60, 1.2); vfx1320({ k: 'slash', x: e.x, y: e.y, z: player.z + 3, a: rand(0, TAU), side: 1, c: '#ff1a1a', big: true, life: .25 }); } A.next = time + .12; }
+    else { for (const e of A.list) if (e && e.dead <= 0) { e.x = A.cx + rand(-25, 25); e.y = A.cy + rand(-25, 25); e.vx = e.vy = 0; rkHit(e, 8, 0, 1.5); } player.x = A.cx; player.y = A.cy - 40;
+      vfx1320({ k: 'slash', x: A.cx, y: A.cy, z: player.z + 3, a: 0, side: 1, c: '#ffd0d0', big: true, life: .4 }); vfx1320({ k: 'ring', x: A.cx, y: A.cy, z: player.z + .3, c: '#ff1a1a', life: .5, s: 9 }); fx.shake = 2; RK.assault = null; } }
+  // Overwhelming Cataclysm
+  if (RK.cata && time > RK.cata.start) { const K = RK.cata;
+    if (K.mode === 'base') { if (K.n < 6 && time > (K.next || 0)) { K.next = time + .12; K.n++; const x = K.e && K.e.dead <= 0 ? K.e.x : K.x, y = K.e && K.e.dead <= 0 ? K.e.y : K.y; for (const e of rkNear(x, y, 95)) rkHit(e, 1.2, 40, 2); vfx1320({ k: 'pillar', x, y, z: player.z, c: '#ff1a1a', life: .4 }); fx.shake = Math.min(2, fx.shake + .3); } if (K.n >= 6) RK.cata = null; }
+    else { const e = K.e; if (K.n < 12 && e && e.dead <= 0 && time > (K.next || 0)) { K.next = time + .08; K.n++; player.x = e.x - player.facing.x * 26; player.y = e.y - player.facing.y * 26; e.vx = e.vy = 0; rkHit(e, 2, 0, 1); vfx1320({ k: 'slash', x: e.x, y: e.y, z: player.z + 3, a: rand(0, TAU), side: K.n % 2 ? 1 : -1, c: '#ff1a1a', big: false, life: .18 }); }
+      else if (K.n >= 12 || !e || e.dead > 0) { const cx = e ? e.x : player.x, cy = e ? e.y : player.y; for (const t of rkNear(cx, cy, 650)) rkHit(t, 15, 900, 1.5); for (let i = 0; i < 4; i++) vfx1320({ k: 'ring', x: cx, y: cy, z: player.z + .3, c: i % 2 ? '#2a0000' : '#ff1a1a', life: .8, s: 12 + i * 8, delay: i * .1 }); vfx1320({ k: 'star', x: cx, y: cy, z: player.z + 5, c: '#ff1a1a', life: .7, s: 20 }); fx.shake = 3; RK.cata = null; } } }
+}
+// extra effect shapes for Reckless: spikes, eruption pillars, a dome and a laser beam
+function reckVfx1325() { for (const v of VFX1320) { if (!['spike', 'pillar', 'domeT', 'beam'].includes(v.k) || v.delay > 0) continue; const k = Math.min(1, v.t / v.life);
+  const m = fxMesh(v, () => { const mat = new THREE.MeshBasicMaterial({ color: v.c, transparent: true, opacity: .85, depthWrite: false, side: THREE.DoubleSide });
+    if (v.k === 'spike') return new THREE.Mesh(GEO.coneHi, mat); if (v.k === 'pillar') return new THREE.Mesh(GEO.cylHi, mat); if (v.k === 'domeT') { mat.opacity = .22; return new THREE.Mesh(GEO.sphereHi, mat); } return new THREE.Mesh(GEO.box, mat); });
+  if (v.k === 'spike') { const h = Math.sin(Math.min(1, k * 2) * Math.PI / 2) * (1 - Math.max(0, k - .6) / .4) * 4; m.position.set(toS(v.x), v.z + h / 2, toS(v.y)); m.scale.set(1, Math.max(.01, h), 1); }
+  else if (v.k === 'pillar') { m.position.set(toS(v.x), v.z + 6, toS(v.y)); m.scale.set(4 * (1 - k * .5), 12 * Math.min(1, k * 3), 4 * (1 - k * .5)); m.material.opacity = .85 * (1 - k); }
+  else if (v.k === 'domeT') { const r = toS(v.s) * 2; m.position.set(toS(v.x), v.z, toS(v.y)); m.scale.set(r, r * .8, r); m.material.opacity = .18 + Math.sin(time * 12) * .05; }
+  else { const dx = toS(v.x2 - v.x), dz = toS(v.y2 - v.y), L = Math.hypot(dx, dz); m.position.set(toS(v.x) + dx / 2, v.z, toS(v.y) + dz / 2); m.rotation.set(0, Math.atan2(dx, dz), 0); m.scale.set(.9 + Math.sin(time * 40) * .2, .9, L); } } }
+const _syncChests1325 = syncChests;
+syncChests = function () { _syncChests1325(); try { reckTick1325(); reckVfx1325(); } catch (e) {} };
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -11079,7 +11185,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.24.0';
+const APP_VERSION = '13.25.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
