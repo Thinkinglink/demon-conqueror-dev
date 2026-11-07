@@ -10254,6 +10254,24 @@ const _syncChests1326 = syncChests;
 syncChests = function () { _syncChests1326(); for (let i = FLAMES1326.length - 1; i >= 0; i--) { const fl = FLAMES1326[i]; let r = fl; while (r.parent) r = r.parent; if (!r.isScene && !fl.parent) { FLAMES1326.splice(i, 1); continue; }
   fl.children.forEach((m, j) => { const k = 1 + Math.sin(time * 18 + j * 2) * .12 + Math.random() * .08; m.scale.y = [2.1, 1.8, 1.5][j] * k; m.position.z = m.scale.y / 2; }); }
   if (FLAMES1326.length > 200) FLAMES1326.splice(0, FLAMES1326.length - 200); };
+// ================= 13.27: fruit skins are all unique: every fruit has its own noun in skin names, and each skin theme changes the fruit's shape parts, not only its colour =================
+const NOUN1327 = { rocket: 'Missile', spin: 'Whirligig', blade: 'Edge', spring: 'Coil', bomb: 'Powderkeg', smoke: 'Haze', spike: 'Thornball', flame: 'Blaze', ice: 'Glacier', sand: 'Dune', dark: 'Umbra', eagle: 'Talon',
+  diamond: 'Gem', light: 'Beacon', rubber: 'Stretch', ghost: 'Spook', magma: 'Lavaheart', quake: 'Tremor', buddha: 'Monk', love: 'Heartbeat', creation: 'Forge', spider: 'Weaver', sound: 'Echo', phoenix: 'Firebird',
+  portal: 'Gate', lightning: 'Thunder', pain: 'Ache', blizzard: 'Whiteout', gravity: 'Singlet', mammoth: 'Tusker', trex: 'Raptor', dough: 'Mochi', shadow: 'Shade', venom: 'Hydra', gas: 'Fume', magnet: 'Lodestone',
+  singularity: 'Event Horizon', volcanic: 'Caldera', chrono: 'Clockwork', kinetic: 'Momentum', plasma: 'Arc', overgrowth: 'Thicket', cyber: 'Circuit', void: 'Abyssal', storm: 'Tempest', vine: 'Creeper', origami: 'Crane',
+  impact: 'Meteor', cosmic: 'Nebula', spirit: 'Soul', yeti: 'Snowbeast', tiger: 'Stripe', kitsune: 'Vixen', control: 'Puppeteer', dragon: 'Wyrm', water: 'Tide', happiness: 'Grin', leviathan: 'Serpent', oni: 'Fiend',
+  celestial: 'Seraph', overgrown: 'Bramble', cardboard: 'Boxkin', absoluteZero: 'Frostcore', reckless: 'Berserker' };
+{ const POOLS = { frost: ['Gravefrost', 'Deadwinter', 'Rime', 'Permafrost', 'Pale', 'Silent Snow', 'Icebound', 'Glacial'], inferno: ['Cinder', 'Brimstone', 'Pyre', 'Scorched', 'Wildfire', 'Ashen', 'Molten', 'Hellforged'],
+    shadow: ['Nightshade', 'Umbral', 'Eclipse', 'Midnight', 'Hollow', 'Gloom', 'Raven', 'Black Mist'], celestial: ['Starlit', 'Aurora', 'Comet', 'Zenith', 'Moonlit', 'Radiant', 'Astral', 'Halo'], toxic: ['Plague', 'Acid', 'Blight', 'Miasma', 'Sludge', 'Viper', 'Fungal', 'Hazard'] };
+  Object.values(FSKIN).forEach(k => { const th = (k.id || '').split(':')[1], f = FRUIT_BY_ID[k.fruit]; if (!f || !POOLS[th]) return; const fi = FRUITS.indexOf(f); k.name = `${POOLS[th][fi % POOLS[th].length]} ${NOUN1327[f.id] || f.name}`; k.theme1327 = th; }); }
+const SKINPARTS1327 = { frost: [['crystals', '#dff6ff', 4], ['icicles', '#bfefff']], inferno: [['wisps', '#ff8a1a', 3], ['drips', '#ff5a1a', true]], shadow: [['spikesBack', '#140a1a'], ['orbs', '#6a3aff', 3]],
+  celestial: [['orbs', '#fff2b8', 4], ['crest', '#ffe08a']], toxic: [['drips', '#9aff3a'], ['orbs', '#b8ff4a', 3]], sig: [['crest', '#ffd23a'], ['hornsC', '#ffd23a']] };
+const _makeFruit3D1327 = makeFruit3D;
+makeFruit3D = function (f, skinC) { const g = _makeFruit3D1327(f, skinC); if (!skinC) return g;
+  const k = Object.values(FSKIN).find(s => s.fruit === f.id && s.c === skinC), th = k ? (k.theme1327 || 'sig') : null, parts = th && SKINPARTS1327[th];
+  if (parts) { SIG1316.__skin1327 = parts; try { addSig1316(g, { id: '__skin1327', type: f.type }); } finally { delete SIG1316.__skin1327; } }
+  if (th === 'celestial') { const h = new THREE.Mesh(GEO.torusHi, new THREE.MeshBasicMaterial({ color: '#ffe08a' })); h.scale.setScalar(1.2); h.position.set(0, 1.25, -.4); h.rotation.x = -.3; g.add(h); }
+  return g; };
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -11211,7 +11229,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.26.0';
+const APP_VERSION = '13.27.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
