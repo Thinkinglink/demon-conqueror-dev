@@ -4835,9 +4835,9 @@ function syncWorld(dt) {
   for (const p of World.plates) p.mesh.material = p.lit ? basic('#ffe066') : lambert('#7a7a6a');
   // ground fruits (natural spawns)
   for (const g of World.groundFruits) {
-    const m = fxMesh(g, () => { const grp = new THREE.Group(); const fm = makeFruitModel(g.fruit); fm.scale.setScalar(.8); grp.add(fm); const beam = new THREE.Mesh(GEO.cyl, glowMat(RARITY_BY_ID[g.fruit.rarity].color, .25)); beam.scale.set(1.2, 40, 1.2); beam.position.y = 20; grp.add(beam); return grp; });
-    const ph = time * 2 + g.x, fr = m.children[0]; m.position.set(toS(g.x), groundY(g.x, g.y) + 1.8 + Math.sin(ph) * .45, toS(g.y)); fr.rotation.y = time * 1.4; fr.rotation.z = Math.sin(ph * .7) * .15;
-    fr.scale.set(.8 * (1 + Math.sin(ph * 2) * .05), .8 * (1 - Math.sin(ph * 2) * .05), .8 * (1 + Math.sin(ph * 2) * .05));
+    const m = fxMesh(g, () => { const grp = new THREE.Group(); const fm = makeFruitModel(g.fruit); fm.scale.setScalar(1.1); grp.add(fm); const rc = RARITY_BY_ID[g.fruit.rarity].color, beam = new THREE.Mesh(GEO.cyl, glowMat(rc, .14)); beam.scale.set(.8, 40, .8); beam.position.y = 20; grp.add(beam); const ring = new THREE.Mesh(GEO.ring, glowMat(rc, .55)); ring.scale.setScalar(2.2); ring.position.y = -1.6; grp.add(ring); return grp; });
+    const ph = time * 2 + g.x, fr = m.children[0]; m.position.set(toS(g.x), groundY(g.x, g.y) + 1.8 + Math.sin(ph) * .45, toS(g.y)); fr.rotation.y = time * .9; fr.rotation.z = Math.sin(ph * .7) * .08; if (m.children[2]) m.children[2].position.y = -1.6 - Math.sin(ph) * .45;
+    fr.scale.set(1.1 * (1 + Math.sin(ph * 2) * .04), 1.1 * (1 - Math.sin(ph * 2) * .04), 1.1 * (1 + Math.sin(ph * 2) * .04));
     if (Math.random() < .25) fx.sparks.push({ x: g.x + rand(-14, 14), y: g.y + rand(-14, 14), z: rand(5, 25), vx: 0, vy: 0, vz: 25, t: 0, life: .7, color: RARITY_BY_ID[g.fruit.rarity].color });
     if (m.children[0].userData.particles && Math.random() < .3) fx.sparks.push({ x: g.x + rand(-10, 10), y: g.y + rand(-10, 10), z: 20, vx: 0, vy: 0, vz: 50, t: 0, life: .6, color: m.children[0].userData.particles });
   }
@@ -5611,7 +5611,7 @@ const fruitIcon0 = (() => {
     const [cx, cy, k] = FACE_AT[f.id] || (FSHAPE[f.id] && FSHAPE[f.id].f) || [50, 52, 1], face = `<g transform="translate(${cx} ${cy}) scale(${k}) translate(-50 -50)"><path d="${EYES}" fill="#fff" stroke="#2a1206" stroke-width="3.5" stroke-linejoin="round"/></g>`;
     return (SPECIAL[f.id] ? (skinC ? SPECIAL[f.id]().replace('<svg ', `<svg style="filter:hue-rotate(${Math.round(hue(skinC) - hue(base.color))}deg) saturate(1.3)" `) : SPECIAL[f.id]()) : FSHAPE[f.id] ? shapedFruit(f) : plainFruit(f)).replace(/<\/svg>$/, face + (FSHAPE[f.id] ? '' : badge(f)) + '</svg>');
   };})();
-const fruitIcon = (...a) => (a[0] && typeof NEW_FRUIT_ART !== 'undefined' && NEW_FRUIT_ART[a[0].id] ? `<svg viewBox="0 0 100 100" aria-hidden="true">${NEW_FRUIT_ART[a[0].id]}</svg>` : fruitIcon0(...a)).replace('<svg ', '<svg class="fruit-ic" ');      // fruits idle: a gentle bob, squash and tilt
+const fruitIcon = (...a) => { const u = a[0] && window.FRUIT3D_READY1312 ? fruitIconURL3D(a[0], a.length > 1 ? a[1] : (skinOf(a[0].id) || {}).c) : ''; if (u) return `<svg class="fruit-ic" viewBox="0 0 100 100" aria-hidden="true"><image href="${u}" width="100" height="100"/></svg>`; return fruitIconOld(...a); }, fruitIconOld = (...a) => (a[0] && typeof NEW_FRUIT_ART !== 'undefined' && NEW_FRUIT_ART[a[0].id] ? `<svg viewBox="0 0 100 100" aria-hidden="true">${NEW_FRUIT_ART[a[0].id]}</svg>` : fruitIcon0(...a)).replace('<svg ', '<svg class="fruit-ic" ');      // fruits idle: a gentle bob, squash and tilt
 function itemIcon(id) {
   const it = ITEMS[id] || PASSES[id], c = it.color || '#e9b949', dk = shade(c.length === 7 ? c : '#e9b949', -.45);
   if (PASSES[id]) return `<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="10" width="36" height="28" rx="5" fill="${c}" stroke="${dk}" stroke-width="2"/><path d="M6 20h36" stroke="${dk}" stroke-width="2"/><path d="M24 14l2.5 5h5l-4 3.5 1.5 5-5-3-5 3 1.5-5-4-3.5h5z" fill="#fff8"/></svg>`;
@@ -9331,6 +9331,170 @@ chatSend = function () { const i = $('chatIn'), t = i && i.value.trim(); _chatSe
 function drawBots80() { for (const b of BOTS80) { if (!b.ch.root.visible) continue; const p = project(b.x, b.y, b.z + 7); if (!p) continue; octx.font = '700 13px Rajdhani, sans-serif'; octx.textAlign = 'center'; octx.lineWidth = 3; octx.strokeStyle = 'rgba(5,12,24,.9)'; const nm = `${b.name} · Lv. ${b.lv}`; octx.strokeText(nm, p.x, p.y); octx.fillStyle = '#ffd6a8'; octx.fillText(nm, p.x, p.y);
     if (b.sayT > time) { octx.globalAlpha = Math.min(1, (b.sayT - time) * 1.5); octx.font = '700 14px system-ui'; const w = Math.min(240, octx.measureText(b.say).width + 20); octx.fillStyle = '#ffffffee'; rr(octx, p.x - w / 2, p.y - 46, w, 28, 10); octx.fill(); octx.fillStyle = '#1a1a2a'; octx.fillText(b.say.length > 34 ? b.say.slice(0, 33) + '…' : b.say, p.x, p.y - 31); octx.globalAlpha = 1; } } }
 const _t68_80 = tick68; tick68 = function (dt) { _t68_80(dt); safe('80bots', () => tickBots80(dt)); };
+// ================= 13.12: fruits and drops restyled. Every fruit is a real 3D fruit (round body, patterned skin, stem and leaf); menus show the same model =================
+// Each fruit: [shape, pattern, pattern colour, accent, leaf colour]. Body colour is the fruit's own colour (or its worn skin). All art is procedural and original.
+const LOOK1312 = {
+  rocket: ['round', 'swirl', '#d83a2a', 'fins'], spin: ['round', 'swirl', '#fff0b8'], blade: ['tall', 'facets', '#eef6fc'], spring: ['tall', 'rings', '#3a8a2a'],
+  bomb: ['round', 'spots', '#ff7a2a', 'fuse'], smoke: ['round', 'swirl', '#f4f7fa'], spike: ['round', 'spots', '#4a3220', 'spikes'], flame: ['round', 'flames', '#ffe14a', 'flameCrown'],
+  ice: ['round', 'swirl', '#ffffff'], sand: ['squat', 'swirl', '#9a7432'], dark: ['round', 'swirl', '#b07aff', '', '#6a3aa8'], eagle: ['pear', 'scales', '#f4ead8', 'wings'],
+  diamond: ['crystal', 'facets', '#ffffff'], light: ['round', 'rays', '#ffc81a', 'rays'], rubber: ['round', 'swirl', '#ffffff'], ghost: ['round', 'swirl', '#5a6a90', '', '#8aa0c8'],
+  magma: ['round', 'cracks', '#ff5a1a', '', '#3a2a20'], quake: ['round', 'cracks', '#6aa8ff'], buddha: ['squat', 'swirl', '#fff2b8', 'halo'], love: ['round', 'hearts', '#ffffff', '', '#ff4f9a'],
+  creation: ['round', 'stars', '#fff6c8'], spider: ['round', 'web', '#e8e8e8', '', '#3a3a3a'], sound: ['round', 'rings', '#ffffff'], phoenix: ['pear', 'flames', '#ffe14a', 'flameCrown'],
+  portal: ['round', 'rings', '#ffffff', 'ring'], lightning: ['round', 'bolts', '#fff36a'], pain: ['round', 'swirl', '#ff9a9a'], blizzard: ['round', 'swirl', '#ffffff'],
+  gravity: ['round', 'rings', '#d8b8ff', 'orbit'], mammoth: ['lobed', 'fur', '#5a3a1a', 'tusks'], trex: ['tall', 'scales', '#2e4a1a', 'horns'], dough: ['round', 'swirl', '#ff9ac8'],
+  shadow: ['round', 'swirl', '#8a5aff', '', '#4a2a7a'], venom: ['round', 'scales', '#b8ff4a', '', '#4a8a2a'], gas: ['round', 'swirl', '#e8fff0'], magnet: ['round', 'rings', '#e8eef4'],
+  singularity: ['round', 'stars', '#ffffff', 'orbit', '#4a2a7a'], volcanic: ['round', 'cracks', '#ffb02a', '', '#3a2a20'], chrono: ['round', 'rings', '#fff2b8', 'ring'], kinetic: ['round', 'bolts', '#ffffff'],
+  plasma: ['round', 'bolts', '#ffffff'], overgrowth: ['lobed', 'veins', '#c8ff8a', 'leaves'], cyber: ['round', 'circuit', '#5afcff'], void: ['round', 'stars', '#c8a0ff', '', '#2a1446'],
+  storm: ['round', 'bolts', '#fff36a'], vine: ['tall', 'veins', '#c8ff8a', 'leaves'], origami: ['crystal', 'facets', '#ffffff'], impact: ['round', 'cracks', '#fff2b8'],
+  cosmic: ['round', 'stars', '#ffffff', '', '#6a3aa8'], spirit: ['round', 'swirl', '#1a1a2a'], yeti: ['round', 'fur', '#ffffff', 'horns'], tiger: ['round', 'stripes', '#1a1208', 'ears'],
+  kitsune: ['pear', 'swirl', '#ffffff', 'ears', '#7a5aff'], control: ['round', 'rings', '#ffffff'], dragon: ['tall', 'scales', '#ffb02a', 'horns'], water: ['pear', 'bubbles', '#e8fbff'],
+  happiness: ['round', 'hearts', '#ff8ab8'], leviathan: ['tall', 'scales', '#9afcff', 'horns'], oni: ['round', 'swirl', '#ffd200', 'horns'], celestial: ['round', 'stars', '#ffffff', 'halo'],
+  overgrown: ['lobed', 'veins', '#a8ff6a', 'leaves'], cardboard: ['crystal', 'facets', '#e8d0a0'],
+};
+const GLOW1312 = new Set(['flame', 'light', 'magma', 'phoenix', 'lightning', 'volcanic', 'plasma', 'cyber', 'cosmic', 'kitsune', 'storm', 'venom', 'void', 'singularity', 'celestial', 'dark', 'portal']);
+const col1312 = (c, k) => { const o = new THREE.Color(c); return '#' + (k >= 0 ? o.lerp(new THREE.Color('#ffffff'), k) : o.lerp(new THREE.Color('#000000'), -k)).getHexString(); };
+const rng1312 = id => { let h = 2166136261; for (const ch of id) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return () => ((h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909)) >>> 0) / 4294967296; };
+// the skin: a 512x256 wrap (top of the canvas is the top of the fruit); patterns are drawn three times so the seam always joins up
+function skinTex1312(id, base, pat, kind, glowOnly) {
+  const W = 512, H = 256, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const x = cv.getContext('2d'), R = rng1312(id + kind);
+  if (glowOnly) { x.fillStyle = '#000'; x.fillRect(0, 0, W, H); }
+  else { const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, col1312(base, .28)); g.addColorStop(.5, base); g.addColorStop(1, col1312(base, -.38)); x.fillStyle = g; x.fillRect(0, 0, W, H); }
+  const wrap = f => [-W, 0, W].forEach(o => { x.save(); x.translate(o, 0); f(); x.restore(); }), hi = col1312(pat, .5);
+  x.lineCap = x.lineJoin = 'round'; x.strokeStyle = x.fillStyle = pat;
+  const spiral = (cx, cy, s) => { x.beginPath(); for (let t = 0; t < 11; t += .15) { const r = s * t / 11; x.lineTo(cx + Math.cos(t) * r, cy + Math.sin(t) * r * .8); } x.stroke(); };
+  const P = {
+    swirl: () => { [[64, 0], [128, 32], [196, 0]].forEach(([y, off]) => { for (let i = 0; i < 6; i++) wrap(() => { const cx = off + i * W / 6 + 20; x.lineWidth = 9; x.strokeStyle = pat; spiral(cx, y, 30); if (!glowOnly) { x.lineWidth = 2.5; x.strokeStyle = hi; spiral(cx - 1.5, y - 1.5, 30); } }); }); },
+    flames: () => { for (let i = 0; i < 9; i++) wrap(() => { const cx = i * W / 9, h = 90 + R() * 70; x.beginPath(); x.moveTo(cx - 26, H); x.quadraticCurveTo(cx - 30, H - h * .5, cx + 4, H - h); x.quadraticCurveTo(cx - 4, H - h * .45, cx + 26, H); x.fill(); }); },
+    cracks: () => { x.lineWidth = 6; for (let i = 0; i < 14; i++) wrap(() => { let px = R() * W, py = 30 + R() * 200; x.beginPath(); x.moveTo(px, py); for (let k = 0; k < 6; k++) { px += (R() - .5) * 70; py += (R() - .5) * 50; x.lineTo(px, py); } x.stroke(); }); },
+    stars: () => { if (!glowOnly) { x.globalAlpha = .35; for (let i = 0; i < 6; i++) { const cx = R() * W, cy = 50 + R() * 160, g = x.createRadialGradient(cx, cy, 0, cx, cy, 70); g.addColorStop(0, col1312(pat, -.2)); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(cx - 70, cy - 70, 140, 140); } x.globalAlpha = 1; x.fillStyle = pat; }
+      for (let i = 0; i < 70; i++) wrap(() => { const cx = R() * W, cy = 20 + R() * 216, r = R() < .15 ? 6 : 2 + R() * 2; x.beginPath(); for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, rr = k % 2 ? r * .35 : r; x.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); } x.fill(); }); },
+    bolts: () => { x.lineWidth = 7; for (let i = 0; i < 8; i++) wrap(() => { let px = i * W / 8 + R() * 30, py = 10; x.beginPath(); x.moveTo(px, py); while (py < H - 10) { px += (R() - .5) * 46; py += 22 + R() * 18; x.lineTo(px, py); } x.stroke(); }); },
+    rings: () => { x.lineWidth = 10; [50, 100, 150, 200].forEach((y, i) => { x.beginPath(); for (let px = 0; px <= W; px += 8) x.lineTo(px, y + Math.sin(px / W * TAU * (i % 2 ? 3 : 2)) * 9); x.stroke(); }); },
+    stripes: () => { for (let i = 0; i < 11; i++) wrap(() => { const cx = i * W / 11 + R() * 10, w = 9 + R() * 8; x.beginPath(); x.moveTo(cx - w, 20); x.quadraticCurveTo(cx + 18, 90, cx - 4, 140); x.quadraticCurveTo(cx - 20, 190, cx + 4, 240); x.lineTo(cx + w * .2, 240); x.quadraticCurveTo(cx - 8, 190, cx + w, 140); x.quadraticCurveTo(cx + 28, 90, cx + w * .3, 20); x.fill(); }); },
+    scales: () => { x.lineWidth = 3.5; for (let r = 0; r < 10; r++) for (let i = 0; i < 18; i++) { const cx = i * W / 18 + (r % 2) * W / 36, cy = 20 + r * 24; x.beginPath(); x.arc(cx, cy, 15, 0, Math.PI); x.stroke(); } },
+    spots: () => { for (let i = 0; i < 26; i++) wrap(() => { x.beginPath(); x.arc(R() * W, 30 + R() * 200, 7 + R() * 12, 0, TAU); x.fill(); }); },
+    bubbles: () => { x.lineWidth = 4; for (let i = 0; i < 30; i++) wrap(() => { const cx = R() * W, cy = 30 + R() * 200, r = 6 + R() * 14; x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.stroke(); x.beginPath(); x.arc(cx - r * .35, cy - r * .35, r * .22, 0, TAU); x.fill(); }); },
+    hearts: () => { for (let r = 0; r < 4; r++) for (let i = 0; i < 8; i++) { const cx = i * W / 8 + (r % 2) * 32 + 16, cy = 45 + r * 55, s = 14; x.beginPath(); x.moveTo(cx, cy + s); x.bezierCurveTo(cx - s * 1.6, cy, cx - s * .8, cy - s * 1.1, cx, cy - s * .35); x.bezierCurveTo(cx + s * .8, cy - s * 1.1, cx + s * 1.6, cy, cx, cy + s); x.fill(); } },
+    web: () => { x.lineWidth = 3; for (let i = 0; i < 16; i++) { x.beginPath(); x.moveTo(i * W / 16, 0); x.lineTo(i * W / 16 + 16, H); x.stroke(); } for (let y = 30; y < H; y += 34) { x.beginPath(); for (let i = 0; i <= 16; i++) { const px = i * W / 16 + (y / H) * 16; i ? x.quadraticCurveTo(px - W / 32, y + 9, px, y) : x.moveTo(px, y); } x.stroke(); } },
+    fur: () => { x.lineWidth = 3; for (let i = 0; i < 900; i++) { const px = R() * W, py = R() * H, a = Math.PI / 2 + (R() - .5) * .8; x.globalAlpha = .35 + R() * .4; x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(a) * 9, py + Math.sin(a) * 9); x.stroke(); } x.globalAlpha = 1; },
+    veins: () => { x.lineWidth = 5; for (let i = 0; i < 8; i++) wrap(() => { const cx = i * W / 8; x.beginPath(); x.moveTo(cx, 0); x.bezierCurveTo(cx + 30, 80, cx - 30, 170, cx + 10, H); x.stroke(); x.lineWidth = 3; for (let k = 1; k < 5; k++) { const y = k * 50; x.beginPath(); x.moveTo(cx + 4, y); x.quadraticCurveTo(cx + 22, y - 6, cx + 34, y - 18); x.stroke(); } x.lineWidth = 5; }); },
+    circuit: () => { x.lineWidth = 4; for (let i = 0; i < 26; i++) wrap(() => { let px = Math.round(R() * 16) * 32, py = Math.round(1 + R() * 6) * 32; x.beginPath(); x.moveTo(px, py); for (let k = 0; k < 3; k++) { if (R() < .5) px += (R() < .5 ? -1 : 1) * 32; else py += 32; x.lineTo(px, Math.min(py, 236)); } x.stroke(); x.beginPath(); x.arc(px, Math.min(py, 236), 6, 0, TAU); x.fill(); }); },
+    rays: () => { for (let i = 0; i < 12; i++) wrap(() => { const cx = i * W / 12; x.beginPath(); x.moveTo(cx - 14, H); x.lineTo(cx, 30); x.lineTo(cx + 14, H); x.fill(); }); },
+    facets: () => { x.lineWidth = 3; x.globalAlpha = .7; for (let i = 0; i < 40; i++) { x.beginPath(); x.moveTo(R() * W, R() * H); x.lineTo(R() * W, R() * H); x.lineTo(R() * W, R() * H); x.closePath(); x.globalAlpha = .12 + R() * .2; x.fill(); x.globalAlpha = .6; x.stroke(); } x.globalAlpha = 1; },
+  };
+  (P[kind] || P.swirl)();
+  const t = new THREE.CanvasTexture(cv); t.anisotropy = 4; return t;
+}
+// the body: a smooth sphere bent into the fruit's shape, with a little dimple where the stem grows
+const BODY1312 = {};
+function body1312(shape) {
+  if (BODY1312[shape]) return BODY1312[shape];
+  if (shape === 'crystal') return BODY1312[shape] = new THREE.IcosahedronGeometry(1, 1);
+  const g = new THREE.SphereGeometry(1, 56, 36), p = g.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) {
+    v.fromBufferAttribute(p, i); let { x, y, z } = v; const t = (y + 1) / 2;
+    if (shape === 'tall') { y *= 1.2; x *= .94; z *= .94; }
+    else if (shape === 'squat') { y *= .82; x *= 1.07; z *= 1.07; }
+    else if (shape === 'pear') { const k = 1.08 - .34 * Math.pow(t, 1.6); x *= k; z *= k; y *= 1.14; }
+    else if (shape === 'lobed') { const k = 1 + .075 * Math.cos(8 * Math.atan2(z, x)) * Math.sin(Math.PI * t); x *= k; z *= k; y *= .9; }
+    const rr = x * x + z * z; if (y > 0) y -= .16 * Math.exp(-rr / .045); else y += .08 * Math.exp(-rr / .03);
+    p.setXYZ(i, x, y, z);
+  }
+  g.computeVertexNormals(); return BODY1312[shape] = g;
+}
+const LEAFGEO1312 = (() => { if (!hasGL) return null; const s = new THREE.Shape(); s.moveTo(0, 0); s.quadraticCurveTo(.32, .26, .82, .02); s.quadraticCurveTo(.36, -.2, 0, 0); return new THREE.ShapeGeometry(s, 8); })();
+const FRUITMAT1312 = {};
+function makeFruit3D(f, skinC) {
+  const L = LOOK1312[f.id] || ['round', f.type === 'Beast' ? 'scales' : 'swirl', col1312(f.color, .55)], base = skinC || f.color, pat = skinC ? col1312(skinC, new THREE.Color(skinC).getHSL({}).l > .6 ? -.45 : .5) : L[2];
+  const key = f.id + '|' + base, A = FruitAestheticMap[f.id] || {}, glow = GLOW1312.has(f.id) || !!A.glow, g = new THREE.Group();
+  const mat = FRUITMAT1312[key] ||= new THREE.MeshPhysicalMaterial({ map: skinTex1312(f.id, base, pat, L[1]), roughness: A.metal ? .3 : A.rough ?? .38, metalness: Math.min(.3, A.metal || 0), clearcoat: .6, clearcoatRoughness: .25,
+    flatShading: L[0] === 'crystal', transparent: f.id === 'ghost', opacity: f.id === 'ghost' ? .82 : 1,
+    ...(glow ? { emissive: new THREE.Color('#ffffff'), emissiveMap: skinTex1312(f.id, base, pat, L[1], true), emissiveIntensity: .75 } : {}) });
+  const body = new THREE.Mesh(body1312(L[0]), mat); body.castShadow = true; g.add(body);
+  const top = L[0] === 'tall' ? 1.06 : L[0] === 'pear' ? 1.0 : L[0] === 'squat' ? .7 : L[0] === 'crystal' ? .95 : .86;
+  const ph = (geo, c, sx, sy, sz, x, y, z, glowIt) => { const m = new THREE.Mesh(GEO[geo], glowIt ? basic(c) : new THREE.MeshPhongMaterial({ color: c, shininess: 60 })); m.scale.set(sx, sy, sz); m.position.set(x, y, z); g.add(m); return m; };
+  const acc = L[3] || '', dark = col1312(base, -.45);
+  if (acc === 'fuse') { ph('cylHi', '#3a3a3a', .14, .5, .14, 0, top + .2, 0); ph('sphere', '#ffd23a', .26, .26, .26, 0, top + .5, 0, true); g.userData.particles = '#ffb02a'; }
+  else {   // the stem: a short curved twig and one or two leaves
+    const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, top - .1, 0), new THREE.Vector3(.03, top + .18, 0), new THREE.Vector3(.16, top + .38, .02)]);
+    const stem = new THREE.Mesh(new THREE.TubeGeometry(curve, 12, .065, 8), new THREE.MeshPhongMaterial({ color: '#5a3b1c', shininess: 20 })); g.add(stem);
+    const leafMat = new THREE.MeshPhongMaterial({ color: L[4] || '#43b04a', side: THREE.DoubleSide, shininess: 40 });
+    const n = acc === 'leaves' ? 4 : 2; for (let i = 0; i < n; i++) { const lf = new THREE.Mesh(LEAFGEO1312, leafMat), a = i * TAU / n + .4; lf.position.set(.04, top + .14, 0); lf.rotation.set(0, a, .45 + (i % 2) * .2); lf.scale.setScalar(i === 0 ? 1 : .75); g.add(lf); }
+  }
+  if (acc === 'fins') for (let i = 0; i < 3; i++) { const a = i * TAU / 3, m = ph('box', '#d83a2a', .1, .6, .5, Math.cos(a) * .82, -.6, Math.sin(a) * .82); m.rotation.y = -a; }
+  if (acc === 'spikes') for (let i = 0; i < 16; i++) { const a = i * 2.39996, y = 1 - (i + .5) / 8, r = Math.sqrt(1 - y * y), d = new THREE.Vector3(Math.cos(a) * r, y * .8, Math.sin(a) * r).normalize(), m = ph('coneHi', dark, .2, .45, .2, d.x * 1.02, d.y * 1.02, d.z * 1.02); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d); }
+  if (acc === 'flameCrown') { for (let i = 0; i < 6; i++) { const a = i * TAU / 6, m = ph('coneHi', i % 2 ? '#ffd23a' : '#ff7a1a', .26, .7, .26, Math.cos(a) * .42, top + .2, Math.sin(a) * .42, true); m.rotation.z = -Math.cos(a) * .4; m.rotation.x = Math.sin(a) * .4; } g.userData.particles = '#ff9a2a'; }
+  if (acc === 'wings') [-1, 1].forEach(s => { const w = ph('sphereHi', pat, .2, .55, .95, s * 1.05, .2, -.1); w.rotation.z = s * -.6; });
+  if (acc === 'rays') { for (let i = 0; i < 8; i++) { const a = i * TAU / 8, m = ph('coneHi', '#fff2a0', .2, .6, .2, Math.cos(a) * 1.2, 0, Math.sin(a) * 1.2, true); m.rotation.z = -Math.PI / 2; m.rotation.y = -a; } g.userData.particles = '#fff3a0'; }
+  if (acc === 'halo') { const h = ph('torusHi', '#ffe08a', 1.5, 1.5, 1.5, 0, top + .35, -.55, true); h.rotation.x = -.35; g.userData.particles = '#ffe08a'; }
+  if (acc === 'ring' || acc === 'orbit') { const h = ph('torusHi', pat, 2.7, 2.7, 1.2, 0, 0, 0, true); h.rotation.x = 1.25; h.rotation.y = .3; if (acc === 'orbit') ph('sphere', pat, .26, .26, .26, 1.32, .25, 0, true); }
+  if (acc === 'tusks') [-1, 1].forEach(s => { const t = ph('coneHi', '#f4ecd8', .16, .7, .16, s * .35, -.55, .85); t.rotation.x = 2.4; t.rotation.z = s * .3; });
+  if (acc === 'horns') [-1, 1].forEach(s => { const h = ph('coneHi', f.id === 'oni' || f.id === 'yeti' ? '#f4ecd8' : col1312(pat, -.1), .22, .62, .22, s * .48, top + .02, .1); h.rotation.z = s * -.55; });
+  if (acc === 'ears') [-1, 1].forEach(s => { const e = ph('coneHi', base, .4, .55, .22, s * .52, top - .02, 0); e.rotation.z = s * -.45; const i2 = ph('coneHi', '#ffb8c8', .22, .34, .1, s * .52, top - .02, .08); i2.rotation.z = s * -.45; });
+  if (glow && !g.userData.particles) g.userData.particles = pat;
+  return g;
+}
+// the old function name now builds the new fruit, wearing your skin if you have one on
+makeFruitModel = function (f) { const s = skinOf(f.id); return makeFruit3D(f, s && s.c); };
+// menu pictures: rendered once from the very same 3D model, kept as a small image
+const FICON1312 = {}; let fiR = null, fiS = null, fiC = null;
+function fruitIconURL3D(f, skinC) {
+  if (!hasGL || !f) return ''; const k = f.id + '|' + (skinC || ''); if (FICON1312[k] !== undefined) return FICON1312[k]; FICON1312[k] = '';
+  try {
+    if (!fiR) { fiR = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true }); fiR.setSize(192, 192); fiS = new THREE.Scene();
+      fiS.add(new THREE.HemisphereLight(0xffffff, 0x445566, .75)); const d = new THREE.DirectionalLight(0xffffff, .85); d.position.set(-3, 5, 6); fiS.add(d); const r = new THREE.DirectionalLight(0xbfe4ff, .5); r.position.set(4, 1, -4); fiS.add(r);
+      fiC = new THREE.PerspectiveCamera(28, 1, .1, 100); }
+    const m = makeFruit3D(f, skinC); m.rotation.set(.18, -.55, 0); fiS.add(m);
+    m.updateMatrixWorld(true); const box = new THREE.Box3().setFromObject(m.children[0]), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3()); c.y += .22; fiC.position.set(c.x, c.y + .1, c.z + Math.max(s.x, s.y + .7) * 2.3); fiC.lookAt(c);
+    fiR.render(fiS, fiC); fiS.remove(m);
+    const bin = atob(fiR.domElement.toDataURL('image/png').split(',')[1]), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    FICON1312[k] = URL.createObjectURL(new Blob([u8], { type: 'image/png' }));
+  } catch (e) { FICON1312[k] = ''; }
+  return FICON1312[k];
+}
+window.FRUIT3D_READY1312 = hasGL;
+// ---------- chests: a wooden treasure chest with metal bands and a lock; the lid swings open when you claim it ----------
+const WOOD1312 = hasGL ? (() => { const cv = document.createElement('canvas'); cv.width = cv.height = 256; const x = cv.getContext('2d'), R = rng1312('wood');
+  for (let i = 0; i < 4; i++) { x.fillStyle = ['#8a5a2e', '#7a4e26', '#946232', '#82552a'][i]; x.fillRect(0, i * 64, 256, 64); x.fillStyle = '#4a2c12'; x.fillRect(0, i * 64, 256, 4); }
+  x.strokeStyle = 'rgba(60,34,14,.45)'; x.lineWidth = 2; for (let i = 0; i < 40; i++) { const y = R() * 256; x.beginPath(); x.moveTo(0, y); x.bezierCurveTo(80, y + (R() - .5) * 10, 170, y + (R() - .5) * 10, 256, y); x.stroke(); }
+  const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; })() : null;
+spawnChest3D = function (x, y, z, type) {
+  const T = CHEST_TYPES[type], g = new THREE.Group(), wood = new THREE.MeshPhongMaterial({ map: WOOD1312, shininess: 12 }),
+    metal = new THREE.MeshPhongMaterial({ color: T.c, emissive: T.e, shininess: 110, specular: 0xffffff }), half = Math.PI;
+  const base = new THREE.Mesh(GEO.box, wood); base.scale.set(3, 1.5, 1.7); base.position.y = .75; g.add(base);
+  const lid = new THREE.Group(); lid.position.set(0, 1.5, -.85); g.add(lid);
+  const dome = new THREE.Mesh(new THREE.CylinderGeometry(.85, .85, 3, 28, 1, false, 0, half), wood); dome.rotation.z = Math.PI / 2; dome.position.z = .85; lid.add(dome);
+  [-1.15, 1.15].forEach(bx => { const b = new THREE.Mesh(GEO.box, metal); b.scale.set(.2, 1.54, 1.76); b.position.set(bx, .75, 0); g.add(b);
+    const lb = new THREE.Mesh(new THREE.CylinderGeometry(.9, .9, .2, 28, 1, false, 0, half), metal); lb.rotation.z = Math.PI / 2; lb.position.set(bx, 0, .85); lid.add(lb); });
+  const rim = new THREE.Mesh(GEO.box, metal); rim.scale.set(3.06, .16, 1.76); rim.position.y = 1.46; g.add(rim);
+  const lock = new THREE.Mesh(GEO.box, metal); lock.scale.set(.5, .62, .16); lock.position.set(0, 1.4, .9); g.add(lock); addBox(g, .1, .22, .05, '#1a1208', 0, 1.36, .99);
+  if (type === 'diamond') { const gem = new THREE.Mesh(GEO.ico, new THREE.MeshPhongMaterial({ color: '#8af0ff', emissive: '#1a6a9a', shininess: 140, flatShading: true })); gem.scale.setScalar(.55); gem.position.set(0, .9, .85); lid.add(gem); }
+  const ring = new THREE.Mesh(GEO.ring, glowMat(new THREE.Color(T.c), .6)); ring.scale.setScalar(2.6); ring.position.y = .06; g.add(ring);
+  g.traverse(o => { if (o.isMesh && o !== ring) o.castShadow = true; }); g.userData.lid = lid; g.position.set(toS(x), z, toS(y)); World.group.add(g);
+  return { x, y, z, type, mesh: g, ready: 0 };
+};
+const _claimChest1312 = claimChest;
+claimChest = function (c) { _claimChest1312(c); c.openT = time; };
+// ---------- loot: when an enemy drops a material, a little glowing gem pops out and flies to you ----------
+const LOOT1312 = []; let lootSrc1312 = null, lootT1312 = 0;
+const _killEnemy1312 = killEnemy;
+killEnemy = function (e, noReward) { lootSrc1312 = e; try { _killEnemy1312(e, noReward); } finally { lootSrc1312 = null; } };
+const _giveMat1312 = giveMat;
+giveMat = function (id, n = 1) { _giveMat1312(id, n); const e = lootSrc1312; if (e && MATS[id] && LOOT1312.length < 30) for (let i = 0; i < Math.min(n, 4); i++) LOOT1312.push({ x: e.x, y: e.y, a: rand(0, TAU), t: -i * .08, c: MATS[id][1] }); };
+const _syncChests1312 = syncChests;
+syncChests = function () {
+  _syncChests1312();
+  for (const c of chests) { const lid = c.mesh.userData.lid; if (!lid) continue; const k = c.openT ? time - c.openT : 9;
+    if (k < 1) { c.mesh.visible = true; lid.rotation.x = -Math.min(1, k * 3.2) * 1.9; c.mesh.scale.setScalar(k > .7 ? 1 - (k - .7) / .3 : 1); }
+    else if (c.mesh.visible) { lid.rotation.x = 0; c.mesh.scale.setScalar(1); } }
+  const ldt = Math.min(.1, Math.max(0, time - lootT1312)); lootT1312 = time;
+  for (let i = LOOT1312.length - 1; i >= 0; i--) { const L = LOOT1312[i]; L.t += ldt; if (L.t < 0) continue; if (L.t > .85) { LOOT1312.splice(i, 1); continue; }
+    const m = fxMesh(L, () => { const g = new THREE.Group(), gem = new THREE.Mesh(GEO.ico, new THREE.MeshPhongMaterial({ color: L.c, emissive: L.c, emissiveIntensity: .45, shininess: 120, flatShading: true })); gem.scale.setScalar(.7); g.add(gem);
+      const halo = new THREE.Mesh(GEO.sphere, glowMat(L.c, .25)); halo.scale.setScalar(1.4); g.add(halo); return g; });
+    const out = Math.min(1, L.t / .35), sx = L.x + Math.cos(L.a) * 40 * out, sy = L.y + Math.sin(L.a) * 40 * out, k = Math.max(0, (L.t - .35) / .5), e2 = k * k;
+    const px = sx + (player.x - sx) * e2, py = sy + (player.y - sy) * e2, h = groundY(px, py) + 1.5 + Math.sin(out * Math.PI) * 3 * (1 - k) + e2 * 2.5;
+    m.position.set(toS(px), h, toS(py)); m.children[0].rotation.y = time * 6; m.scale.setScalar(1 - e2 * .6); }
+};
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -10288,7 +10452,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.10.0';
+const APP_VERSION = '13.12.1';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
