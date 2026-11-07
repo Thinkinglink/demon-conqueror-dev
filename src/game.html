@@ -10299,12 +10299,12 @@ function formExtras1328(form, m) {
     arms.forEach(A => { for (let i = 0; i < 3; i++) add(A, 'torusHi', chain, w * .14, w * .14, w * .2, 0, -h * .32 - i * h * .025, 0, Math.PI / 2 + (i % 2) * .6); });
     if (head) for (const k of [-1, 1]) { add(head, 'coneHi', ph('#c8a070'), .2, .7, .2, k * .45, .6, -.1, -.4, 0, -k * .8); add(head, 'sphereHi', gl('#5ad8ff'), .14, .1, .08, k * .25, .15, .6); }
     add(root, 'box', ph('#2a2a3a'), w * .5, h * .14, S.z * .55, C.x, C.y - h * .05, C.z); add(root, 'box', gl('#5ad8ff'), w * .04, h * .2, .05, C.x, C.y + h * .18, front - S.z * .05); }
-  if (form === 'tiger') { const black = ph('#1a1208'), bandage = ph('#f4f0e8', 20);
+  if (form === 'tiger' && m.geo !== 'TigerMan') { const black = ph('#1a1208'), bandage = ph('#f4f0e8', 20);
     for (let i = 0; i < 6; i++) add(root, 'box', black, w * .9, h * .03, S.z * .06, C.x, C.y + h * (.25 - i * .02), C.z + S.z * (.3 - i * .12), 0, 0, (i % 2 ? .2 : -.2));
     legs.forEach(L => { add(L, 'cylHi', bandage, w * .16, h * .06, w * .16, 0, -h * .16, 0); add(L, 'cylHi', bandage, w * .16, h * .04, w * .16, 0, -h * .23, 0); }); X.feetFire = '#ff6a1a'; }
-  if (form === 'venom') { (m.heads || []).slice(0, 3).forEach(H => { for (const k of [-1, 1]) { add(H, 'coneHi', ph('#1a0a2a'), .14, .55, .14, k * .3, .5, -.1, -.4, 0, -k * .3); add(H, 'coneHi', ph('#f8f4e8'), .07, .22, .07, k * .16, -.2, .6, Math.PI); } add(H, 'sphereHi', gl('#ff4fd8'), .3, .1, .06, 0, .15, .62); });
+  if (form === 'venom' && m.geo !== 'VenomHydra') { (m.heads || []).slice(0, 3).forEach(H => { for (const k of [-1, 1]) { add(H, 'coneHi', ph('#1a0a2a'), .14, .55, .14, k * .3, .5, -.1, -.4, 0, -k * .3); add(H, 'coneHi', ph('#f8f4e8'), .07, .22, .07, k * .16, -.2, .6, Math.PI); } add(H, 'sphereHi', gl('#ff4fd8'), .3, .1, .06, 0, .15, .62); });
     X.drip = '#b05aff'; }
-  if (form === 'phoenix') { const f1 = gl('#3fc6ff', .75), f2 = gl('#bff4ff', .85), gold = gl('#ffc83a');
+  if (form === 'phoenix' && m.geo !== 'FlamePhoenix') { const f1 = gl('#3fc6ff', .75), f2 = gl('#bff4ff', .85), gold = gl('#ffc83a');
     (m.wings || []).forEach(W => { const sd = Math.sign(W.position.x) || 1; for (let i = 0; i < 6; i++) { const b = add(W, 'coneHi', i % 2 ? f2 : f1, w * .05, h * (.5 - i * .05), w * .02, sd * w * (.12 + i * .08), -h * .05 * i, 0, 0, 0, -sd * (1.2 + i * .12)); b.renderOrder = 2; } });
     const hd = head || root; for (let i = 0; i < 5; i++) add(hd, 'coneHi', gold, .14, .55, .14, (i - 2) * .16, head ? .55 : top, head ? -.1 : C.z, 0, 0, (i - 2) * .3); X.trail = '#ffc83a'; }
   if (form === 'gas') gasDemons1331(m);
@@ -10470,6 +10470,64 @@ function gasDemons1331(m) { const ring = new THREE.Group(); ring.position.y = 4.
     const add = (mat, sx, sy, sz, x, y, z) => { const o = new THREE.Mesh(GEO.sphereHi, mat); o.scale.set(sx, sy, sz); o.position.set(x, y, z); d.add(o); return o; };
     add(body, .9, .95, .85, 0, 0, 0); add(dark, .5, .4, .4, -.25, .35, -.2); add(dark, .45, .4, .4, .3, -.3, -.25); add(white, .2, .26, .05, -.2, .18, .42); add(white, .2, .26, .05, .2, .18, .42); add(mouth, .36, .4, .05, 0, -.18, .43); add(white, .3, .06, .04, 0, -.02, .45); }
   (m.extra1328 ||= {}).spin = ring; m.extra1328.drip = '#b05aff'; }
+// ================= 13.32: detailed transformations. Gas becomes a smog knight; Tiger an upright beast man; new sculpts for Mammoth, Venom and Phoenix (original designs) =================
+{ const S = 'sphereHi', B = 'box', CN = 'coneHi', CY = 'cylHi', CP = 'capsule';
+  // ---- Gas: the Smog Knight ----
+  { const AR = '#34345e', AR2 = '#4a4a82', TRIM = '#8a7ad8', GEM = '!#9a6aff', VIS = '!#5af0ff', FL = '!#5ab4ff', FL2 = '!#bff0ff', CAPE = '#2a1450';
+    const arm = (k, sword) => [[S, k * 2.1, 5.6, 0, 1.6, 1.4, 1.6, 'arm', AR2], [CN, k * .4, .55, 0, .3, .8, .3, 'on', TRIM, 0], [CN, k * .1, .7, .35, .25, .6, .25, 'on', TRIM, .4], [CP, 0, -1.6, 0, .95, 2.2, .95, 'on', AR], [S, 0, -2.6, 0, 1.15, .9, 1.15, 'on', AR2],
+      [CY, 0, -3.3, .05, 1.0, 1.3, 1.0, 'on', AR], [S, 0, -4.1, .15, .85, .75, .85, 'on', AR2], ...(sword ? [[B, 0, -4.2, 2.2, .14, .5, 3.6, 'on', FL2], [B, 0, -4.2, 2.2, .3, .7, 3.4, 'on', FL], [B, 0, -4.2, .45, .9, .2, .25, 'on', TRIM], [CY, 0, -4.2, .05, .2, .2, .8, 'on', '#2a2a3a', 1.5708]] : [])];
+    const leg = k => [[CY, k * .75, 3.1, 0, 1.1, 1.9, 1.1, 'leg', AR], [S, 0, -1.05, .15, .95, .7, .95, 'on', AR2], [CY, 0, -2.0, 0, .95, 1.4, .95, 'on', AR], [B, 0, -2.85, .3, 1.05, .45, 1.6, 'on', AR2], [CN, 0, -1.05, .55, .2, .45, .2, 'on', TRIM, 1.5708]];
+    BEAST_GEO.SmogKnight = [[S, 0, 3.3, 0, 2.1, 1.3, 1.5, '', AR], ...[-1, -.35, .35, 1].map(x => [B, x * .85, 2.75, .65, .65, 1.2, .14, '', x % 1 ? AR2 : AR]), ...[-1, 1].map(k => [B, k * 1.05, 2.8, 0, .14, 1.1, 1.2, '', AR]),
+      [S, 0, 4.7, 0, 3.1, 2.4, 1.9, '', AR], [S, 0, 5.0, .45, 2.4, 1.6, 1.2, '', AR2], [S, 0, 5.05, .98, .45, .45, .2, '', GEM], [B, 0, 3.8, .75, 2.0, .3, .3, '', TRIM], [B, 0, 6.05, 0, 2.2, .35, 1.6, '', TRIM],
+      ...[-1, 1].map(k => [B, k * .5, 4.2, -1.1, 1.0, 3.6, .12, '', CAPE]), [B, 0, 2.3, -1.15, 2.0, 2.8, .12, '', CAPE],
+      [S, 0, 7.0, .1, 1.35, 1.45, 1.35, 'head', AR2], [B, 0, -.05, .62, 1.0, .18, .12, 'on', VIS], [B, 0, .35, .66, .14, .55, .1, 'on', TRIM], [CN, 0, -.55, .55, .55, .4, .3, 'on', AR, Math.PI],
+      ...[0, 1, 2, 3, 4].map(i => [CN, 0, .85 + (i === 2 ? .2 : 0), -.5 + i * .25, .3, 1.1 - Math.abs(i - 2) * .2, .3, 'on', i % 2 ? FL2 : FL, -.3]), ...[-1, 1].map(k => [CN, k * .7, .5, 0, .2, .7, .2, 'on', TRIM, 0]),
+      ...arm(-1, false), ...arm(1, true), ...leg(-1), ...leg(1)];
+    Object.assign(TRANSFORMS.gas, { geo: 'SmogKnight', opacity: 1, color: AR }); }
+  // ---- Tiger: an upright beast man ----
+  { const OR = '#f08a24', OR2 = '#ffb04a', WH = '#f4ead8', BK = '#1a1208', PANTS = '#3a2a6a', WRAP = '#f8f4ec', CLAW = '!#f4f4f4';
+    const stripes = (n, y0, z, w) => Array.from({ length: n }, (_, i) => [B, (i % 2 ? .25 : -.25) * w, y0 + i * .35, z, w * .9, .09, .1, '', BK, 0]);
+    const arm = k => [[S, k * 2.0, 5.65, 0, 1.55, 1.4, 1.5, 'arm', OR], [CP, 0, -1.55, 0, 1.0, 2.0, 1.0, 'on', OR], [S, 0, -2.5, .1, 1.2, 1.35, 1.15, 'on', OR2], [CY, 0, -2.85, .1, 1.25, .5, 1.25, 'on', WRAP], [CY, 0, -3.25, .1, 1.2, .35, 1.2, 'on', WRAP],
+      [S, 0, -3.85, .25, .95, .85, .95, 'on', OR], ...[-.3, 0, .3].map(x => [CN, x, -4.35, .55, .1, .38, .1, 'on', CLAW, 2.5]), ...[0, 1, 2].map(i => [B, 0, -.6 - i * .5, .5, .9, .08, .08, 'on', BK, 0])];
+    const leg = k => [[CY, k * .8, 2.95, 0, 1.3, 1.9, 1.3, 'leg', PANTS], [S, 0, -.95, 0, 1.35, .9, 1.35, 'on', PANTS], [CY, 0, -1.85, 0, 1.0, 1.2, 1.0, 'on', OR], [S, 0, -2.45, .4, 1.05, .5, 1.6, 'on', OR], ...[-.3, 0, .3].map(x => [CN, x, -2.5, 1.25, .1, .32, .1, 'on', CLAW, 1.5708])];
+    BEAST_GEO.TigerMan = [[S, 0, 3.1, 0, 2.2, 1.4, 1.6, '', PANTS], [B, 0, 3.6, 0, 2.3, .35, 1.7, '', '#5a3a9a'], [S, 0, 4.1, .1, 1.9, 1.6, 1.4, '', WH], ...[-1, 1].flatMap(k => [3.75, 4.15].map(y => [S, k * .32, y, .7, .5, .38, .3, '', '#fff4e0'])),
+      [S, 0, 5.05, 0, 3.3, 2.2, 1.9, '', OR], [S, -.62, 5.1, .55, 1.4, 1.0, .95, '', WH], [S, .62, 5.1, .55, 1.4, 1.0, .95, '', WH], ...stripes(4, 4.4, -.95, 2.6), ...[-1, 1].flatMap(k => stripes(3, 4.3, .2, .1).map(r => [B, k * 1.62, r[2], .1, .1, .09, 1.2, '', BK, 0])),
+      [S, 0, 6.65, .35, 1.4, 1.3, 1.3, 'head', OR], [S, 0, -.3, .7, .95, .7, .7, 'on', WH], [S, 0, -.12, 1.08, .32, .22, .2, 'on', '#2a1410'], ...[-1, 1].map(k => [CN, k * .55, .75, -.05, .45, .55, .3, 'on', OR, 0]),
+      ...[-1, 1].map(k => [S, k * .3, .15, .64, .2, .12, .08, 'on', '!#ffd23a']), ...[-1, 1].map(k => [B, k * .3, .3, .66, .3, .06, .06, 'on', BK, 0]), ...[-1, 1].map(k => [CN, k * .17, -.62, .9, .08, .26, .08, 'on', CLAW, Math.PI]),
+      ...[0, 1, 2].map(i => [B, 0, .4 + i * .18, .55 - i * .25, .5 - i * .1, .07, .1, 'on', BK, 0]), ...[-1, 1].map(k => [S, k * .75, -.25, .2, .5, .6, .5, 'on', WH]), ...arm(-1), ...arm(1), ...leg(-1), ...leg(1)];
+    Object.assign(TRANSFORMS.tiger, { geo: 'TigerMan' }); }
+  // ---- Mammoth: shaggy body, domed head, long trunk, curved tusks ----
+  { const BR = '#5a3a22', BR2 = '#6a4628', BRD = '#3a2414', IV = '#f0e2b0', TOE = '#e8dcc0';
+    const fur = Array.from({ length: 18 }, (_, i) => { const a = i * 2.39, y = 3.6 + (i % 3) * .55; return [S, Math.cos(a) * 2.0, y, Math.sin(a) * 2.6, 1.2, 1.0, 1.2, '', i % 2 ? BR : BR2]; });
+    const leg = (x, z) => [[CY, x, 3.0, z, 1.35, 2.4, 1.35, 'leg', BR], [S, 0, -.6, 0, 1.6, .9, 1.6, 'on', BR2], [CY, 0, -2.1, 0, 1.45, 1.2, 1.45, 'on', BRD], ...[-.4, 0, .4].map(cx => [S, cx, -2.75, .55, .35, .3, .3, 'on', TOE])];
+    const tusk = k => Array.from({ length: 5 }, (_, i) => [S, k * (.6 + i * .12), -.7 - i * .45 + i * i * .06, 1.0 + i * .45, .32 - i * .04, .32 - i * .04, .55, 'on', IV]);
+    BEAST_GEO.WoollyMammoth = [[S, 0, 4.2, 0, 3.6, 3.2, 5.0, '', BR], [S, 0, 5.4, 1.0, 3.0, 2.2, 2.6, '', BR2], [S, 0, 3.4, .2, 3.2, 1.8, 4.2, '', BRD], ...fur,
+      [S, 0, 5.6, 2.9, 2.1, 2.2, 2.0, 'head', BR], [S, 0, 1.0, -.2, 1.6, 1.0, 1.5, 'on', BR2], ...[-1, 1].map(k => [S, k * 1.0, .1, -.1, .9, 1.3, .25, 'on', BRD]), ...[-1, 1].map(k => [S, k * .5, .2, .9, .16, .12, .1, 'on', '!#ff2a1a']), ...tusk(-1), ...tusk(1),
+      [CP, 0, 4.9, 3.7, .7, 1.3, .7, 'trunk', BR2], [CP, 0, -1.2, .05, .55, 1.2, .55, 'on', BR], [CP, 0, -2.2, .15, .42, 1.1, .42, 'on', BR2], [S, 0, -2.85, .25, .4, .3, .4, 'on', BRD],
+      ...leg(-1.25, 1.7), ...leg(1.25, 1.7), ...leg(-1.25, -1.7), ...leg(1.25, -1.7), [CP, 0, 4.4, -2.7, .35, 1.4, .35, 'tail', BR], [S, 0, -.8, 0, .45, .55, .45, 'on', BRD]];
+    Object.assign(TRANSFORMS.mammoth, { geo: 'WoollyMammoth' }); }
+  // ---- Venom: a hydra with three long necks ----
+  { const VP = '#4a1a7a', VP2 = '#6a2aa8', VD = '#1e0a34', GOO = '#9a3aff', HORN = '#140818', FANG = '!#f8f4e8', EYE = '!#ff4fd8';
+    const neck = (x, z, hx, hy, hz) => Array.from({ length: 5 }, (_, i) => { const t = (i + 1) / 6; return [S, x + (hx - x) * t, 4.2 + (hy - 4.2) * t + Math.sin(t * Math.PI) * .6, z + (hz - z) * t, .9 - t * .25, .9 - t * .25, .9 - t * .25, '', i % 2 ? VP : VP2]; });
+    const head = (x, y, z) => [[S, x, y, z, 1.1, .9, 1.5, 'head', VP2], [S, 0, -.38, .55, .9, .32, 1.15, 'on', VD], [S, 0, .18, .65, .85, .4, 1.0, 'on', VP], ...[-1, 1].map(k => [S, k * .32, .3, .7, .16, .11, .1, 'on', EYE]),
+      ...[-1, 1].map(k => [CN, k * .35, .65, -.2, .18, .7, .18, 'on', HORN, -.7]), ...[-1, 1].map(k => [CN, k * .2, -.25, 1.15, .08, .3, .08, 'on', FANG, Math.PI]), ...[-.2, 0, .2].map(x2 => [CN, x2, .55, -.6, .14, .5, .14, 'on', HORN, -1.1])];
+    BEAST_GEO.VenomHydra = [[S, 0, 3.6, 0, 3.0, 2.4, 3.4, '', VP], [S, 0, 3.1, .5, 2.4, 1.6, 2.4, '', VD], ...[0, 1, 2, 3, 4, 5].map(i => [CN, 0, 4.8 - i * .1, .9 - i * .55, .3, .8, .3, '', HORN, -.5]),
+      ...neck(-.9, 1.0, -2.2, 7.2, 2.4), ...neck(0, 1.2, 0, 8.0, 2.8), ...neck(.9, 1.0, 2.2, 7.2, 2.4), ...head(-2.2, 7.4, 2.7), ...head(0, 8.2, 3.1), ...head(2.2, 7.4, 2.7),
+      ...[[-1.1, 1.3], [1.1, 1.3], [-1.1, -1.3], [1.1, -1.3]].flatMap(([x, z]) => [[CY, x, 2.6, z, .95, 1.9, .95, 'leg', VP], [S, 0, -1.9, .3, 1.05, .4, 1.4, 'on', VD], ...[-.3, .3].map(cx => [CN, cx, -1.95, 1.0, .1, .3, .1, 'on', FANG, 1.5708])]),
+      ...Array.from({ length: 6 }, (_, i) => [CP, (i - 2.5) * .55, 2.3, (i % 2 ? .6 : -.4), .22, .7, .22, '', GOO]),
+      [S, 0, 3.4, -2.6, 1.2, 1.0, 1.8, 'tail', VP], [S, 0, -.1, -1.5, .8, .7, 1.4, 'tail', VP2], [CN, 0, 0, -1.2, .4, 1.0, .4, 'tail', HORN, -1.5708]];
+    Object.assign(TRANSFORMS.venom, { geo: 'VenomHydra' }); }
+  // ---- Phoenix: feathered body, flame crest, layered wings, tail plumes ----
+  { const BL = '#2aa8e0', BL2 = '#5ad0ff', CR = '#e8f8ff', GD = '#e9b949', FL = '!#ffd23a', FL2 = '!#ff8a1a';
+    const wing = k => [[S, k * 1.2, 4.3, -.1, 1.4, .55, 1.3, 'wing', BL], ...Array.from({ length: 7 }, (_, i) => [S, k * (1.4 + i * .55), .1 - i * .18, -.55 - i * .1, 2.0 - i * .12, .16, .55, 'on', i % 2 ? BL2 : BL]),
+      ...Array.from({ length: 6 }, (_, i) => [S, k * (1.1 + i * .5), -.15 - i * .12, .1, 1.5 - i * .1, .14, .45, 'on', i % 2 ? CR : BL2]), ...Array.from({ length: 4 }, (_, i) => [S, k * (4.6 + i * .2), -1.2 - i * .3, -.9, 1.2, .12, .4, 'on', '!#7ae8ff'])];
+    BEAST_GEO.FlamePhoenix = [[S, 0, 3.4, 0, 1.6, 1.8, 2.2, '', BL], [S, 0, 3.3, .6, 1.2, 1.4, 1.4, '', CR], ...Array.from({ length: 6 }, (_, i) => [S, (i % 2 ? .3 : -.3), 3.0 + (i >> 1) * .45, .95, .45, .35, .25, '', i % 2 ? CR : BL2]),
+      [S, 0, 4.9, 1.1, .95, .95, 1.0, 'head', BL], [CN, 0, -.1, .75, .3, .7, .3, 'on', GD, 1.5708], [CN, 0, -.32, .6, .2, .4, .2, 'on', '#c89a2a', 1.5708], ...[-1, 1].map(k => [S, k * .32, .15, .55, .14, .14, .1, 'on', '!#ffffff']),
+      ...[-.25, 0, .25].map((z, i) => [CN, 0, .7 + (i === 1 ? .2 : 0), z - .2, .2, .9, .2, 'on', i === 1 ? FL : FL2, -.4]), ...wing(-1), ...wing(1),
+      ...[-.4, 0, .4].flatMap((x, i) => [[CN, x, 3.0, -1.6, .3, 2.4 + (i === 1 ? .6 : 0), .12, '', i === 1 ? BL2 : BL, -2.0], [CN, x, 2.4, -2.6, .22, .8, .1, '', FL, -2.2]]),
+      ...[-1, 1].flatMap(k => [[CY, k * .45, 2.2, .15, .22, 1.2, .22, 'leg', GD], ...[-.15, 0, .15].map(x => [CN, x, -1.2, .3, .07, .3, .07, 'on', GD, 1.5708])])];
+    Object.assign(TRANSFORMS.phoenix, { geo: 'FlamePhoenix' }); }
+}
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -11427,7 +11485,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.31.0';
+const APP_VERSION = '13.32.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
