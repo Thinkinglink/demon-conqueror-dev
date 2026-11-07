@@ -9485,7 +9485,7 @@ function skinTex1312(id, base, pat, kind, glowOnly) {
     rays: () => { for (let i = 0; i < 12; i++) wrap(() => { const cx = i * W / 12; x.beginPath(); x.moveTo(cx - 14, H); x.lineTo(cx, 30); x.lineTo(cx + 14, H); x.fill(); }); },
     facets: () => { x.lineWidth = 3; x.globalAlpha = .7; for (let i = 0; i < 40; i++) { x.beginPath(); x.moveTo(R() * W, R() * H); x.lineTo(R() * W, R() * H); x.lineTo(R() * W, R() * H); x.closePath(); x.globalAlpha = .12 + R() * .2; x.fill(); x.globalAlpha = .6; x.stroke(); } x.globalAlpha = 1; },
   };
-  (P[kind] || P.swirl)();
+  if (kind !== 'none') (P[kind] || P.swirl)();   // 13.24: 'none' = a clean solid skin
   const t = new THREE.CanvasTexture(cv); t.anisotropy = 4; return t;
 }
 // the body: a smooth sphere bent into the fruit's shape, with a little dimple where the stem grows
@@ -9513,10 +9513,9 @@ const FRUITMAT1312 = {};
 function makeFruit3D(f, skinC) {
   const L = LOOK1312[f.id] || ['round', f.type === 'Beast' ? 'scales' : 'swirl', col1312(f.color, .55)], base = skinC || f.color, pat = skinC ? col1312(skinC, new THREE.Color(skinC).getHSL({}).l > .6 ? -.45 : .5) : L[2];
   const key = f.id + '|' + base, A = FruitAestheticMap[f.id] || {}, glow = GLOW1312.has(f.id) || !!A.glow, g = new THREE.Group();
-  const mat = FRUITMAT1312[key] ||= new THREE.MeshPhysicalMaterial({ map: skinTex1312(f.id, base, pat, L[1]), roughness: A.metal ? .3 : A.rough ?? .38, metalness: Math.min(.3, A.metal || 0), clearcoat: .6, clearcoatRoughness: .25,
+  const mat = FRUITMAT1312[key] ||= new THREE.MeshPhysicalMaterial({ map: skinTex1312(f.id, base, pat, 'none'), roughness: A.metal ? .3 : A.rough ?? .38, metalness: Math.min(.3, A.metal || 0), clearcoat: .6, clearcoatRoughness: .25,
     flatShading: L[0] === 'crystal', transparent: f.id === 'ghost', opacity: f.id === 'ghost' ? .82 : 1,
-    ...(glow ? { emissive: new THREE.Color('#ffffff'), emissiveMap: skinTex1312(f.id, base, pat, L[1], true), emissiveIntensity: .75 } : {}) });
-  if (!mat.bumpMap) { mat.bumpMap = mat.map; mat.bumpScale = .065; mat.needsUpdate = true; }   // 13.18: the pattern stands out in relief
+    ...(glow ? { emissive: new THREE.Color('#ffffff'), emissiveMap: skinTex1312(f.id, base, pat, 'none', true), emissiveIntensity: .75 } : {}) });
   const body = new THREE.Mesh(sculpt1323(f, L[0]), mat); body.castShadow = true; g.add(body);   // 13.23: sculpted per fruit
   const top = L[0] === 'tall' ? 1.06 : L[0] === 'pear' ? 1.0 : L[0] === 'squat' ? .7 : L[0] === 'crystal' ? .95 : L[0] === 'cube' ? .86 : .86;
   face1318(g, body, f, base);   // 13.18: each fruit's own eyes and mouth
@@ -11080,7 +11079,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.23.0';
+const APP_VERSION = '13.24.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
