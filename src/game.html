@@ -2649,7 +2649,7 @@ function waveTexture() {
 function islandMesh(isl) {
   const T = THEMES[isl.theme], grp = new THREE.Group();
   const { tex, E } = islandTexture(isl, T);
-  const B = isl.baseZ || 0, mesh = new THREE.Mesh(islandGrid(isl, E), new THREE.MeshLambertMaterial({ map: tex, vertexColors: true }));
+  const B = isl.baseZ || 0, mesh = new THREE.Mesh(islandGrid(isl, E), groundDetail1321(new THREE.MeshLambertMaterial({ map: tex, vertexColors: true }), E));
   mesh.position.set(toS(isl.x), 1 + B, toS(isl.y)); mesh.receiveShadow = true; grp.add(mesh);
   if (!B) {
     const sh = new THREE.Mesh(GEO.disc, new THREE.MeshBasicMaterial({ map: shallowTexture(), transparent: true, depthWrite: false }));
@@ -2711,7 +2711,7 @@ function DecorBatch() {
       if (!list.length) continue;
       const glow = type[0] === 'g';
       const base = glow ? type.slice(1) : type, geo = base === 'sphere' ? GEO.sphereMid : base === 'cyl' ? GEO.cylMid : base === 'pcyl' ? GEO.cylHi : base === 'cone8' ? GEO.coneMid : GEO[base];   // smooth, rounded scenery
-      const mat = glow ? new THREE.MeshBasicMaterial({ color: 0xffffff }) : new THREE.MeshLambertMaterial({ color: 0xffffff });
+      const mat = glow ? new THREE.MeshBasicMaterial({ color: 0xffffff }) : triplanar1321(new THREE.MeshLambertMaterial({ color: 0xffffff }), base);   // 13.21: textured scenery
       const im = new THREE.InstancedMesh(geo, mat, list.length);
       if (!glow) { im.castShadow = true; im.receiveShadow = true; }
       list.forEach((p, i) => { e.set(p.rx, p.ry, 0); q.setFromEuler(e); m4.compose(new THREE.Vector3(p.x, p.y, p.z), q, new THREE.Vector3(p.sx, p.sy, p.sz)); im.setMatrixAt(i, m4); im.setColorAt(i, c.set(p.color)); });
@@ -9982,6 +9982,64 @@ function vfxTick1320() {
 }
 const _syncChests1320 = syncChests;
 syncChests = function () { _syncChests1320(); try { vfxTick1320(); } catch (e) {} };
+// ================= 13.21: island quality. A tiled detail layer on every island's ground, and world-space textures on buildings and scenery (planks, stone, plaster, shingles, bark, leaves) =================
+function dtex1321(kind) {
+  const C = (window.DTEX1321 ||= {}); if (C[kind]) return C[kind];
+  const N = 256, cv = document.createElement('canvas'); cv.width = cv.height = N; const x = cv.getContext('2d'); let s = kind.length * 977; const R = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  const base = v => { x.fillStyle = `rgb(${v},${v},${v})`; x.fillRect(0, 0, N, N); }, dot = (px, py, r, v, a) => { x.fillStyle = `rgba(${v},${v},${v},${a})`; x.beginPath(); x.arc(px, py, r, 0, TAU); x.fill(); };
+  const wrapDot = (px, py, r, v, a) => { for (const ox of [-N, 0, N]) for (const oy of [-N, 0, N]) dot(px + ox, py + oy, r, v, a); };
+  if (kind === 'ground') { base(205); for (let i = 0; i < 60; i++) wrapDot(R() * N, R() * N, 10 + R() * 26, R() < .5 ? 235 : 175, .25);
+    x.lineCap = 'round'; for (let i = 0; i < 1400; i++) { const px = R() * N, py = R() * N, h = 3 + R() * 6, v = R() < .5 ? 250 : 150; x.strokeStyle = `rgba(${v},${v},${v},.45)`; x.lineWidth = 1.4; x.beginPath(); x.moveTo(px, py); x.lineTo(px + (R() - .5) * 3, py - h); x.stroke(); }
+    for (let i = 0; i < 260; i++) wrapDot(R() * N, R() * N, .8 + R() * 1.4, R() < .5 ? 255 : 140, .5); }
+  else if (kind === 'wood') { base(200); for (let r = 0; r < 8; r++) { const y = r * 32, v = 185 + R() * 40; x.fillStyle = `rgb(${v},${v},${v})`; x.fillRect(0, y, N, 32); x.fillStyle = 'rgb(110,110,110)'; x.fillRect(0, y, N, 3); const off = R() * N; x.fillRect(off, y, 3, 32); x.fillRect((off + 128) % N, y, 3, 32);
+      x.strokeStyle = 'rgba(140,140,140,.5)'; x.lineWidth = 1.2; for (let k = 0; k < 5; k++) { const yy = y + 6 + R() * 22; x.beginPath(); x.moveTo(0, yy); x.bezierCurveTo(80, yy + (R() - .5) * 6, 170, yy + (R() - .5) * 6, N, yy); x.stroke(); } wrapDot(R() * N, y + 16, 2.5, 120, .7); } }
+  else if (kind === 'stone') { base(170); for (let r = 0; r < 8; r++) { const y = r * 32, off = r % 2 ? 32 : 0; for (let i = -1; i < 4; i++) { const v = 175 + R() * 55; x.fillStyle = `rgb(${v},${v},${v})`; x.fillRect(off + i * 64 + 3, y + 3, 58, 26); x.fillStyle = 'rgba(255,255,255,.18)'; x.fillRect(off + i * 64 + 3, y + 3, 58, 4); } }
+    for (let i = 0; i < 300; i++) wrapDot(R() * N, R() * N, 1 + R() * 2, R() < .5 ? 120 : 240, .25); }
+  else if (kind === 'plaster') { base(215); for (let i = 0; i < 90; i++) wrapDot(R() * N, R() * N, 4 + R() * 14, R() < .5 ? 235 : 190, .2); for (let i = 0; i < 400; i++) wrapDot(R() * N, R() * N, .8, 160, .35); }
+  else if (kind === 'shingle') { base(150); for (let r = 0; r < 11; r++) for (let i = -1; i < 9; i++) { const cx = i * 32 + (r % 2) * 16, cy = r * 24, v = 175 + R() * 60; x.fillStyle = `rgb(${v},${v},${v})`; x.beginPath(); x.moveTo(cx - 15, cy); x.lineTo(cx - 15, cy + 16); x.quadraticCurveTo(cx, cy + 30, cx + 15, cy + 16); x.lineTo(cx + 15, cy); x.fill(); x.strokeStyle = 'rgb(105,105,105)'; x.lineWidth = 2; x.stroke(); } }
+  else if (kind === 'bark') { base(185); x.lineCap = 'round'; for (let i = 0; i < 60; i++) { const px = R() * N, v = R() < .5 ? 120 : 230; x.strokeStyle = `rgba(${v},${v},${v},.5)`; x.lineWidth = 2 + R() * 4; x.beginPath(); x.moveTo(px, 0); x.bezierCurveTo(px + (R() - .5) * 20, 90, px + (R() - .5) * 20, 170, px, N); x.stroke(); } }
+  else if (kind === 'leaf') { base(180); for (let i = 0; i < 260; i++) { const px = R() * N, py = R() * N, r = 6 + R() * 10, v = R() < .55 ? 235 : 130; for (const ox of [-N, 0, N]) for (const oy of [-N, 0, N]) { x.fillStyle = `rgba(${v},${v},${v},.35)`; x.beginPath(); x.ellipse(px + ox, py + oy, r, r * .55, R() * 3, 0, TAU); x.fill(); } } }
+  const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return C[kind] = t;
+}
+// world-space (triplanar) detail for instanced scenery: boxes pick planks, stone or plaster from their colour
+function triplanar1321(mat, type) {
+  const T = type === 'cone4' || type === 'cone8' ? ['shingle', 'shingle', 'shingle'] : type === 'cyl' || type === 'pcyl' ? ['bark', 'stone', 'plaster'] : type === 'sphere' ? ['leaf', 'stone', 'plaster'] : ['wood', 'stone', 'plaster'];
+  const sc = type === 'sphere' ? .09 : type === 'cone4' || type === 'cone8' ? .12 : .1;
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.tA = { value: dtex1321(T[0]) }; sh.uniforms.tB = { value: dtex1321(T[1]) }; sh.uniforms.tC = { value: dtex1321(T[2]) };
+    sh.vertexShader = 'varying vec3 vWP1321; varying vec3 vWN1321; varying vec3 vIC1321;\n' + sh.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>
+      #ifdef USE_INSTANCING
+        vWP1321 = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz; vWN1321 = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * objectNormal);
+      #else
+        vWP1321 = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN1321 = normalize(mat3(modelMatrix) * objectNormal);
+      #endif
+      #ifdef USE_INSTANCING_COLOR
+        vIC1321 = instanceColor;
+      #else
+        vIC1321 = vec3(1.0);
+      #endif`);
+    sh.fragmentShader = 'uniform sampler2D tA; uniform sampler2D tB; uniform sampler2D tC; varying vec3 vWP1321; varying vec3 vWN1321; varying vec3 vIC1321;\n'
+      + 'vec3 tri1321(sampler2D t, vec3 p, vec3 w) { return texture2D(t, p.zy).rgb * w.x + texture2D(t, p.xz).rgb * w.y + texture2D(t, p.xy).rgb * w.z; }\n'
+      + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+        { vec3 w = abs(vWN1321); w = pow(w, vec3(4.0)); w /= (w.x + w.y + w.z + 1e-4); vec3 p = vWP1321 * ${sc.toFixed(3)};
+          float mx = max(vIC1321.r, max(vIC1321.g, vIC1321.b)), mn = min(vIC1321.r, min(vIC1321.g, vIC1321.b)), sat = mx - mn;
+          float brown = step(vIC1321.b + .04, vIC1321.r) * step(.08, sat) * step(mx, .85), grey = step(sat, .08), light = step(.8, mx) * (1.0 - brown);
+          float kA, kB = grey * (1.0 - light), kC; ${type === 'box' ? 'kA = brown * (1.0 - kB); kC = clamp(1.0 - kA - kB, 0.0, 1.0);' : 'kC = grey * light; kA = clamp(1.0 - kB - kC, 0.0, 1.0);'}
+          vec3 d = tri1321(tA, p, w) * kA + tri1321(tB, p, w) * kB + tri1321(tC, p, w) * kC;
+          diffuseColor.rgb *= d * 1.22; }`);
+  };
+  mat.customProgramCacheKey = () => 'tri1321' + type;
+  return mat;
+}
+// the ground: a tiled detail texture multiplied over the island's own painted map
+function groundDetail1321(mat, E) {
+  const rep = Math.max(8, toS(2 * E) / 9);
+  mat.onBeforeCompile = sh => { sh.uniforms.tG = { value: dtex1321('ground') };
+    sh.fragmentShader = 'uniform sampler2D tG;\n' + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+      diffuseColor.rgb *= texture2D(tG, vUv * ${rep.toFixed(1)}).rgb * 1.24;`); };
+  mat.customProgramCacheKey = () => 'gd1321' + rep.toFixed(1);
+  return mat;
+}
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -10939,7 +10997,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.20.0';
+const APP_VERSION = '13.21.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
