@@ -9429,8 +9429,8 @@ const LOOK1312 = {
   rocket: ['round', 'swirl', '#d83a2a', 'fins'], spin: ['round', 'swirl', '#fff0b8'], blade: ['tall', 'facets', '#eef6fc'], spring: ['tall', 'rings', '#3a8a2a'],
   bomb: ['round', 'spots', '#ff7a2a', 'fuse'], smoke: ['round', 'swirl', '#f4f7fa'], spike: ['round', 'spots', '#4a3220', 'spikes'], flame: ['round', 'flames', '#ffe14a', 'flameCrown'],
   ice: ['round', 'swirl', '#ffffff'], sand: ['squat', 'swirl', '#9a7432'], dark: ['round', 'swirl', '#b07aff', '', '#6a3aa8'], eagle: ['pear', 'scales', '#f4ead8', 'wings'],
-  diamond: ['cube', 'facets', '#ffffff'], light: ['round', 'rays', '#ffc81a', 'rays'], rubber: ['round', 'swirl', '#ffffff'], ghost: ['round', 'swirl', '#5a6a90', '', '#8aa0c8'],
-  magma: ['round', 'cracks', '#ff5a1a', '', '#3a2a20'], quake: ['cube', 'cracks', '#6aa8ff'], buddha: ['squat', 'swirl', '#fff2b8', 'halo'], love: ['round', 'hearts', '#ffffff', '', '#ff4f9a'],
+  diamond: ['cube', 'facets', '#ffffff'], light: ['star', 'rays', '#ffc81a'], rubber: ['round', 'swirl', '#ffffff'], ghost: ['round', 'swirl', '#5a6a90', '', '#8aa0c8'],
+  magma: ['round', 'cracks', '#ff5a1a', '', '#3a2a20'], quake: ['cube', 'cracks', '#6aa8ff'], buddha: ['squat', 'swirl', '#fff2b8', 'halo'], love: ['heart', 'hearts', '#ffffff', '', '#ff4f9a'],
   creation: ['cube', 'stars', '#fff6c8'], spider: ['round', 'web', '#e8e8e8', '', '#3a3a3a'], sound: ['round', 'rings', '#ffffff'], phoenix: ['pear', 'flames', '#ffe14a', 'flameCrown'],
   portal: ['round', 'rings', '#ffffff', 'ring'], lightning: ['round', 'bolts', '#fff36a'], pain: ['round', 'swirl', '#ff9a9a'], blizzard: ['cube', 'swirl', '#ffffff'],
   gravity: ['round', 'rings', '#d8b8ff', 'orbit'], mammoth: ['lobed', 'fur', '#5a3a1a', 'tusks'], trex: ['tall', 'scales', '#2e4a1a', 'horns'], dough: ['round', 'swirl', '#ff9ac8'],
@@ -9489,8 +9489,10 @@ function body1312(shape) {
     if (shape === 'tall') { y *= 1.2; x *= .94; z *= .94; }
     else if (shape === 'squat') { y *= .82; x *= 1.07; z *= 1.07; }
     else if (shape === 'pear') { const k = 1.08 - .34 * Math.pow(t, 1.6); x *= k; z *= k; y *= 1.14; }
+    else if (shape === 'heart') { if (y > 0) { y -= .5 * Math.exp(-x * x / .05) * y; x *= 1 + .18 * y; } else { const k = 1 + y * .6; x *= k; z *= k; y *= 1.18; } z *= .78; }
+    else if (shape === 'star') { const a = Math.atan2(y, x), k = .72 + .6 * Math.pow((Math.cos(5 * (a - Math.PI / 2)) + 1) / 2, 3); x *= k; y *= k; z *= .6; }
     else if (shape === 'lobed') { const k = 1 + .075 * Math.cos(8 * Math.atan2(z, x)) * Math.sin(Math.PI * t); x *= k; z *= k; y *= .9; }
-    const rr = x * x + z * z; if (y > 0) y -= .16 * Math.exp(-rr / .045); else y += .08 * Math.exp(-rr / .03);
+    const rr = x * x + z * z; if (shape !== 'star' && shape !== 'heart') { if (y > 0) y -= .16 * Math.exp(-rr / .045); else y += .08 * Math.exp(-rr / .03); }
     p.setXYZ(i, x, y, z);
   }
   g.computeVertexNormals(); return BODY1312[shape] = g;
@@ -9524,7 +9526,7 @@ function makeFruit3D(f, skinC) {
   if (acc === 'flameCrown') { for (let i = 0; i < 6; i++) { const a = i * TAU / 6, m = ph('coneHi', i % 2 ? '#ffd23a' : '#ff7a1a', .26, .7, .26, Math.cos(a) * .42, top + .2, Math.sin(a) * .42, true); m.rotation.z = -Math.cos(a) * .4; m.rotation.x = Math.sin(a) * .4; } g.userData.particles = '#ff9a2a'; }
   if (acc === 'wings') [-1, 1].forEach(s => { const w = ph('sphereHi', pat, .2, .55, .95, s * 1.05, .2, -.1); w.rotation.z = s * -.6; });
   if (acc === 'rays') { for (let i = 0; i < 8; i++) { const a = i * TAU / 8, m = ph('coneHi', '#fff2a0', .2, .6, .2, Math.cos(a) * 1.2, 0, Math.sin(a) * 1.2, true); m.rotation.z = -Math.PI / 2; m.rotation.y = -a; } g.userData.particles = '#fff3a0'; }
-  if (acc === 'halo') { const h = ph('torusHi', '#ffe08a', 1.5, 1.5, 1.5, 0, top + .35, -.55, true); h.rotation.x = -.35; g.userData.particles = '#ffe08a'; }
+  if (acc === 'halo') { const h = ph('torusHi', '#ffe08a', 1.15, 1.15, 1.15, 0, top + .1, -.8, true); h.rotation.x = -.2; g.userData.particles = '#ffe08a'; }
   if (acc === 'ring' || acc === 'orbit') { const h = ph('torusHi', pat, 2.7, 2.7, 1.2, 0, 0, 0, true); h.rotation.x = 1.25; h.rotation.y = .3; if (acc === 'orbit') ph('sphere', pat, .26, .26, .26, 1.32, .25, 0, true); }
   if (acc === 'tusks') [-1, 1].forEach(s => { const t = ph('coneHi', '#f4ecd8', .16, .7, .16, s * .35, -.55, .85); t.rotation.x = 2.4; t.rotation.z = s * .3; });
   if (acc === 'horns') [-1, 1].forEach(s => { const h = ph('coneHi', f.id === 'oni' || f.id === 'yeti' ? '#f4ecd8' : col1312(pat, -.1), .22, .62, .22, s * .48, top + .02, .1); h.rotation.z = s * -.55; });
@@ -9544,8 +9546,11 @@ function fruitIconURL3D(f, skinC) {
       fiC = new THREE.PerspectiveCamera(28, 1, .1, 100); }
     const m = makeFruit3D(f, skinC); m.rotation.set(.18, -.55, 0); fiS.add(m);
     m.updateMatrixWorld(true); const box = new THREE.Box3().setFromObject(m.children[0]), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3()); c.y += .22; fiC.position.set(c.x, c.y + .1, c.z + Math.max(s.x, s.y + .7) * 2.3); fiC.lookAt(c);
-    fiR.render(fiS, fiC); fiS.remove(m);
-    const bin = atob(fiR.domElement.toDataURL('image/png').split(',')[1]), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    m.traverse(o => { if (o.isSprite) o.visible = false; }); fiR.render(fiS, fiC); fiS.remove(m);
+    const au = typeof SIG1316 !== 'undefined' && (SIG1316[f.id] || []).find(q => q[0] === 'aura'), out = document.createElement('canvas'); out.width = out.height = 192; const ox = out.getContext('2d');
+    if (au) { const gr = ox.createRadialGradient(96, 100, 10, 96, 100, 96); gr.addColorStop(0, au[1] + 'cc'); gr.addColorStop(.5, au[1] + '55'); gr.addColorStop(1, au[1] + '00'); ox.fillStyle = gr; ox.fillRect(0, 0, 192, 192); }   // 13.16: the aura glows behind the fruit
+    ox.drawImage(fiR.domElement, 0, 0);
+    const bin = atob(out.toDataURL('image/png').split(',')[1]), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
     FICON1312[k] = URL.createObjectURL(new Blob([u8], { type: 'image/png' }));
   } catch (e) { FICON1312[k] = ''; }
   return FICON1312[k];
@@ -9678,6 +9683,71 @@ function styleSticker1313(id) {
     [/superhuman/, 'fist', '#ffd23a', '#ff9a1a'], [/thunder/, 'bolt', '#ffe14a', '#8a5aff'], [/tempest|storm/, 'storm', '#5a6a8a', '#ffe14a'], [/gale|agile|air/, 'tornado', '#c8f0ff', '#ffffff'], [/void/, 'spiral', '#2a1446', '#c8a0ff'], [/starfall|star/, 'sparkle', '#ffd23a', '#ffffff'], [/destruction/, 'burst', '#c8202a', '#ffb02a'], [/inferno|ember/, 'flame', '#ff4a1a', '#ffe14a'], [/guard|shield/, 'crack', '#8a6a4a', '#ffd8a0'], [/ice|frost/, 'snow', '#7ad8ff', '#ffffff'], [/stone|earth|rock/, 'crack', '#8a6a4a', '#ffd8a0']].find(r => r[0].test(n));
   return pick ? sticker1313(pick[1], pick[2], pick[3]) : sticker1313('fist', c, shade1313(c, .5));
 }
+// ================= 13.16: every fruit gets its own built-up model: signature parts placed on the skin, plus a soft aura glow (all original designs) =================
+const SIG1316 = {
+  dragon: [['crest', '#ffb02a'], ['hornsC', '#f4ecd8'], ['teeth'], ['leafCrown', '#3fae4a'], ['aura', '#ff7a2a']],
+  kitsune: [['wisps', '#6ab0ff', 5], ['tails', '#e8f4ff', 3], ['aura', '#5a8aff']],
+  yeti: [['fur', '#ffffff'], ['icicles', '#bff4ff'], ['hornsC', '#f4ecd8'], ['aura', '#bfefff']],
+  gas: [['wisps', '#9affc8', 3], ['aura', '#7affb0']], tiger: [['teeth'], ['fur', '#ff9a2a'], ['aura', '#ffb02a']],
+  lightning: [['bolts', '#fff36a'], ['aura', '#8a6aff']], dough: [['drips', '#fff6ee']], pain: [['spikesBack', '#ff6a9a'], ['aura', '#ff4f8a']],
+  trex: [['teeth'], ['crest', '#3a6a1a']], gravity: [['orbs', '#c8a0ff', 3], ['aura', '#7a3aff']], mammoth: [['fur', '#6a4a2a']],
+  spirit: [['wisps', '#ffffff', 3], ['wisps', '#3a2a5a', 3], ['aura', '#d8d8ff']], venom: [['teeth'], ['drips', '#a0ff4a'], ['aura', '#7aff3a']],
+  shadow: [['spikesBack', '#1a0a2a'], ['teeth'], ['aura', '#6a3aff']], control: [['orbs', '#ffffff', 4], ['aura', '#9afcff']], portal: [['aura', '#6ab8ff']],
+  buddha: [['lotus', '#ffd23a'], ['aura', '#ffe08a']], blizzard: [['crystals', '#dff6ff', 6], ['icicles', '#dff6ff'], ['aura', '#bfefff']],
+  creation: [['crystals', '#ffe08a', 5], ['aura', '#fff2b8']], phoenix: [['wisps', '#3fa8ff', 4], ['featherWings', '#3fa8ff'], ['aura', '#3fa8ff']],
+  sound: [['orbs', '#e8d0ff', 3], ['aura', '#b08aff']], spider: [['legs', '#2a2a2a']], love: [['aura', '#ff7ab8']], magma: [['drips', '#ff5a1a', true], ['wisps', '#ffb02a', 2], ['aura', '#ff4a1a']],
+  quake: [['crystals', '#cfe4ff', 3]], diamond: [['crystals', '#bff4ff', 5]], light: [['aura', '#fff3a0']], ghost: [['drips', '#e8f0ff'], ['aura', '#c8d8ff']],
+  eagle: [['featherWings', '#8a5a2e']], ice: [['crystals', '#ffffff', 4], ['icicles', '#dff6ff']], dark: [['spikesBack', '#2a1446'], ['aura', '#5a2aaa']],
+  flame: [['wisps', '#ffb02a', 4], ['aura', '#ff7a1a']], smoke: [['fur', '#f0f4f8']], spring: [['coil', '#3a8a2a']], spin: [['pinwheel', '#ffd27a']], blade: [['pinwheel', '#dfe8f0']],
+  leviathan: [['fins', '#2ad8c8'], ['teeth'], ['hornsC', '#e8e2d0'], ['aura', '#2ad8c8']], oni: [['hornsC', '#f4ecd8'], ['teeth'], ['aura', '#ff2a1a']],
+  celestial: [['orbs', '#ffffff', 3], ['aura', '#9ad8ff']], cosmic: [['orbs', '#ff8af0', 3], ['aura', '#b05aff']], void: [['orbs', '#8a5aff', 3], ['aura', '#3a1a6a']],
+  singularity: [['aura', '#6a3aff']], storm: [['bolts', '#fff36a'], ['aura', '#6a8aff']], plasma: [['bolts', '#ff8af0'], ['aura', '#ff4fd8']], cyber: [['aura', '#2affff']],
+  volcanic: [['drips', '#ff7a1a', true], ['wisps', '#ffb02a', 2], ['aura', '#ff5a1a']], kinetic: [['bolts', '#ffffff']], overgrowth: [['leafCrown', '#3fae4a']],
+  overgrown: [['leafCrown', '#2e8a2a']], vine: [['leafCrown', '#4caf50']], water: [['drips', '#7ad8ff'], ['fins', '#3a9aff']], happiness: [['aura', '#ffe14a']],
+  absoluteZero: [['crystals', '#dff6ff', 6], ['icicles', '#bfefff'], ['aura', '#9ad8ff']], impact: [['crystals', '#fff2b8', 3]],
+};
+const GLOWTEX1316 = hasGL ? (() => { const cv = document.createElement('canvas'); cv.width = cv.height = 128; const x = cv.getContext('2d'), g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+  g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.35, 'rgba(255,255,255,.45)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(cv); })() : null;
+function addSig1316(g, f) {
+  const parts = SIG1316[f.id]; if (!parts) return; const body = g.children[0]; body.geometry.computeBoundingBox(); body.updateMatrixWorld(true);
+  const top = body.geometry.boundingBox.max.y, bot = body.geometry.boundingBox.min.y, rc = new THREE.Raycaster(), R = rng1312(f.id + 'sig');
+  const surf = (dx, dy, dz) => { const d = new THREE.Vector3(dx, dy, dz).normalize(); rc.set(d.clone().multiplyScalar(5), d.clone().negate()); const h = rc.intersectObject(body)[0]; return h ? { p: h.point, n: h.face.normal.clone().normalize() } : { p: d.clone(), n: d }; };
+  const ph = c => new THREE.MeshPhongMaterial({ color: c, shininess: 70 }), gl = (c, o = 1) => new THREE.MeshBasicMaterial({ color: c, transparent: o < 1, opacity: o, depthWrite: o >= 1 });
+  const mesh = (geo, mat, sx, sy, sz) => { const m = new THREE.Mesh(GEO[geo], mat); m.scale.set(sx, sy, sz); g.add(m); return m; };
+  const along = (m, p, n, off = 0) => { m.position.copy(p).addScaledVector(n, off); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), n); return m; };
+  const P = {
+    crest: c => { const mat = ph(c); for (let i = 0; i < 6; i++) { const a = -.15 + i * .38, s = surf(0, Math.cos(a), -Math.sin(a)); along(mesh('coneHi', mat, .1, .55 - i * .05, .38), s.p, s.n, .18); } },
+    hornsC: c => { const mat = ph(c); [-1, 1].forEach(sd => { let s = surf(sd * .55, .8, .05), p = s.p.clone(), dir = new THREE.Vector3(sd * .55, .8, -.2).normalize();
+      for (let k = 0; k < 3; k++) { const w = .24 - k * .06, len = .32; const m = mesh(k === 2 ? 'coneHi' : 'cylHi', mat, w, len, w); along(m, p.clone().addScaledVector(dir, len / 2), dir); p.addScaledVector(dir, len * .85); dir.add(new THREE.Vector3(sd * .15, -.12, -.35)).normalize(); } }); },
+    wisps: (c, n = 3) => { for (let i = 0; i < n; i++) { const a = i / n * TAU + R(), w = new THREE.Group(); w.position.set(Math.cos(a) * .65, top + .05 + R() * .2, Math.sin(a) * .65); w.rotation.z = -Math.cos(a) * .5; w.rotation.x = Math.sin(a) * .5; g.add(w);
+      const s1 = new THREE.Mesh(GEO.sphereHi, gl(c)); s1.scale.setScalar(.32); w.add(s1); const c1 = new THREE.Mesh(GEO.coneHi, gl(c)); c1.scale.set(.3, .7, .3); c1.position.y = .4; w.add(c1); const c2 = new THREE.Mesh(GEO.coneHi, gl('#ffffff')); c2.scale.set(.14, .38, .14); c2.position.y = .2; w.add(c2); }
+      g.userData.particles = c; },
+    tails: (c, n = 3) => { const mat = ph(c), tip = ph('#ffffff'); for (let i = 0; i < n; i++) { const a = (i - (n - 1) / 2) * .55, t = new THREE.Group(); t.position.set(Math.sin(a) * .3, -.2, -.75); t.rotation.set(-.9, 0, a); g.add(t);
+      const m = new THREE.Mesh(GEO.capsule, mat); m.scale.set(.32, 1.1, .32); m.position.y = .5; t.add(m); const tp = new THREE.Mesh(GEO.sphereHi, tip); tp.scale.setScalar(.36); tp.position.y = 1.05; t.add(tp); } },
+    crystals: (c, n = 4) => { const mat = new THREE.MeshPhongMaterial({ color: c, emissive: c, emissiveIntensity: .25, shininess: 140, flatShading: true, transparent: true, opacity: .9 });
+      for (let i = 0; i < n; i++) { const a = i * 2.39 + R(), y = .2 + R() * .7, s = surf(Math.cos(a) * (1 - y * .5), y, Math.sin(a) * (1 - y * .5)); const k = .7 + R() * .6; along(mesh('cone4', mat, .3 * k, .75 * k, .3 * k), s.p, s.n, .25 * k); } },
+    icicles: c => { const mat = new THREE.MeshPhongMaterial({ color: c, shininess: 140, transparent: true, opacity: .9 }); for (let i = 0; i < 7; i++) { const a = i / 7 * TAU, s = surf(Math.cos(a), -.45, Math.sin(a)); const m = mesh('coneHi', mat, .14, .45 + R() * .25, .14); m.position.copy(s.p).add(new THREE.Vector3(0, -.2, 0)); m.rotation.x = Math.PI; } },
+    fur: c => { const mat = ph(c); for (let i = 0; i < 16; i++) { const a = i * 2.39, y = -.5 + (i % 4) * .3, s = surf(Math.cos(a), y, Math.sin(a)); if (s.n.z > .55 && Math.abs(s.p.y) < .45) continue; along(mesh('sphereHi', mat, .42, .3, .42), s.p, s.n, .04); } },
+    teeth: () => { const s = surf(0, -.38, 1), m = new THREE.Group(); m.position.copy(s.p).addScaledVector(s.n, .01); m.lookAt(s.p.clone().add(s.n)); g.add(m);
+      const mouth = new THREE.Mesh(GEO.sphereHi, gl('#1a0505')); mouth.scale.set(.75, .2, .05); m.add(mouth); for (let i = 0; i < 6; i++) { const t = new THREE.Mesh(GEO.coneHi, ph('#f8f4e8')); t.scale.set(.09, .16, .06); t.position.set(-.3 + i * .12, i % 2 ? -.04 : .04, .03); t.rotation.z = i % 2 ? 0 : Math.PI; m.add(t); } },
+    drips: (c, glow) => { const mat = glow ? gl(c) : new THREE.MeshPhongMaterial({ color: c, shininess: 90, transparent: true, opacity: .92 }); for (let i = 0; i < 5; i++) { const a = i / 5 * TAU + .3, s = surf(Math.cos(a), -.6, Math.sin(a)); const m = mesh('capsule', mat, .2, .45 + R() * .3, .2); m.position.copy(s.p).add(new THREE.Vector3(0, -.15, 0)); } },
+    bolts: c => { const mat = gl(c); for (let k = 0; k < 3; k++) { let p = new THREE.Vector3(Math.cos(k * 2.1) * 1.15, .9, Math.sin(k * 2.1) * 1.15); for (let i = 0; i < 4; i++) { const q = p.clone().add(new THREE.Vector3((R() - .5) * .5, -.45, (R() - .5) * .5)); q.setLength(Math.max(1.1, q.length())); const d = q.clone().sub(p), m = mesh('box', mat, .07, d.length(), .07); m.position.copy(p).add(q).multiplyScalar(.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); p = q; } } g.userData.particles = c; },
+    lotus: c => { const mat = ph(c); for (let i = 0; i < 8; i++) { const a = i / 8 * TAU, m = mesh('sphereHi', mat, .5, .14, .9); m.position.set(Math.cos(a) * .75, bot + .12, Math.sin(a) * .75); m.rotation.y = -a + Math.PI / 2; m.rotation.x = -.35; } },
+    fins: c => { const mat = ph(c), s = surf(0, .5, -1); along(mesh('coneHi', mat, .08, .7, .55), s.p, s.n, .25); [-1, 1].forEach(sd => { const q = surf(sd, -.1, 0); along(mesh('coneHi', mat, .06, .5, .4), q.p, q.n, .18); }); },
+    legs: c => { const mat = ph(c); for (let i = 0; i < 8; i++) { const sd = i < 4 ? -1 : 1, k = i % 4, a = (k - 1.5) * .45, root = new THREE.Vector3(sd * .8, -.1, Math.sin(a) * .7), knee = root.clone().add(new THREE.Vector3(sd * .55, .35, Math.sin(a) * .25)), foot = knee.clone().add(new THREE.Vector3(sd * .25, -1.0, Math.sin(a) * .2));
+      [[root, knee], [knee, foot]].forEach(([u, v]) => { const d = v.clone().sub(u), m = mesh('cylHi', mat, .07, d.length(), .07); m.position.copy(u).add(v).multiplyScalar(.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); }); } },
+    featherWings: c => { const mat = ph(c), tip = ph(col1312(c, .5)); [-1, 1].forEach(sd => { for (let i = 0; i < 4; i++) { const m = mesh('sphereHi', i === 3 ? tip : mat, .16, .9 - i * .12, .4); m.position.set(sd * (1 + i * .22), .25 + i * .12, -.15 - i * .05); m.rotation.z = sd * (-.9 - i * .18); } }); },
+    coil: c => { const mat = ph(c); for (let i = 0; i < 3; i++) { const t = mesh('torusHi', mat, 2.15 - i * .15, 2.15 - i * .15, 1.4); t.rotation.x = Math.PI / 2; t.position.y = -.45 + i * .45; } },
+    pinwheel: c => { const mat = ph(c); for (let i = 0; i < 4; i++) { const a = i / 4 * TAU, m = mesh('coneHi', mat, .5, 1.1, .08); m.position.set(Math.cos(a) * 1.1, 0, Math.sin(a) * 1.1); m.rotation.z = -Math.PI / 2; m.rotation.y = -a; m.rotateX(.6); } },
+    leafCrown: c => { const mat = new THREE.MeshPhongMaterial({ color: c, side: THREE.DoubleSide, shininess: 40 }); for (let i = 0; i < 6; i++) { const lf = new THREE.Mesh(LEAFGEO1312, mat), a = i / 6 * TAU; lf.scale.setScalar(1.35); lf.position.set(Math.cos(a) * .2, top - .05, Math.sin(a) * .2); lf.rotation.set(0, -a, .75); g.add(lf); } },
+    orbs: (c, n = 3) => { const mat = gl(c); for (let i = 0; i < n; i++) { const a = i / n * TAU, m = mesh('sphereHi', mat, .22, .22, .22); m.position.set(Math.cos(a) * 1.45, Math.sin(a * 2) * .3 + .1, Math.sin(a) * 1.45); } g.userData.particles = c; },
+    spikesBack: c => { const mat = ph(c); for (let i = 0; i < 9; i++) { const a = -.5 + i * .25, sd = i % 2 ? -.25 : .25, s = surf(sd, Math.cos(a), -Math.sin(a) - .3); along(mesh('coneHi', mat, .2, .55 + R() * .3, .2), s.p, s.n, .2); } },
+    aura: c => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: GLOWTEX1316, color: c, transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthWrite: false })); sp.scale.set(4.2, 4.2, 1); sp.renderOrder = -1; g.add(sp); g.userData.aura = sp; if (!g.userData.particles) g.userData.particles = c; },
+  };
+  for (const [k, ...a] of parts) try { P[k] && P[k](...a); } catch (e) {}
+}
+const _makeFruit3D1316 = makeFruit3D;
+makeFruit3D = function (f, skinC) { const g = _makeFruit3D1316(f, skinC); addSig1316(g, f); return g; };
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -10635,7 +10705,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.15.0';
+const APP_VERSION = '13.16.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
