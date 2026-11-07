@@ -10228,6 +10228,32 @@ function reckVfx1325() { for (const v of VFX1320) { if (!['spike', 'pillar', 'do
   else { const dx = toS(v.x2 - v.x), dz = toS(v.y2 - v.y), L = Math.hypot(dx, dz); m.position.set(toS(v.x) + dx / 2, v.z, toS(v.y) + dz / 2); m.rotation.set(0, Math.atan2(dx, dz), 0); m.scale.set(.9 + Math.sin(time * 40) * .2, .9, L); } } }
 const _syncChests1325 = syncChests;
 syncChests = function () { _syncChests1325(); try { reckTick1325(); reckVfx1325(); } catch (e) {} };
+// ================= 13.26: Dragon breathes fire, Kitsune is a fox, Control rides a cloud =================
+FACE1318.kitsune = ['sly', 'none', '#6ab0ff'];
+const FLAMES1326 = [];
+const _makeFruit3D1326 = makeFruit3D;
+makeFruit3D = function (f, skinC) { const g = _makeFruit3D1326(f, skinC), base = skinC || f.color;
+  const M = (geo, mat, sx, sy, sz, x, y, z, rx = 0, ry = 0, rz = 0) => { const m = new THREE.Mesh(GEO[geo], mat); m.scale.set(sx, sy, sz); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); g.add(m); return m; };
+  const ph = c => new THREE.MeshPhongMaterial({ color: c, shininess: 60 });
+  if (f.id === 'dragon') {   // a cone of fire from the mouth: yellow core, orange, red edge
+    const fl = new THREE.Group(); fl.position.set(0, -.36, .95); g.add(fl);
+    [['#ff2a0a', .75, 2.1, .55], ['#ff8a1a', .55, 1.8, .75], ['#ffe14a', .32, 1.5, .95]].forEach(([c, w, l, o]) => { const m = new THREE.Mesh(GEO.coneHi, new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o, depthWrite: false }));
+      m.scale.set(w, l, w); m.rotation.x = -Math.PI / 2; m.position.z = l / 2; fl.add(m); });
+    fl.userData.f1326 = true; FLAMES1326.push(fl); g.userData.particles = '#ff8a1a';
+  }
+  if (f.id === 'kitsune') {   // the fox: snout and nose, cheek fluff, four legs; the tails and ears are already there
+    const fur = ph(base), white = ph('#f4f8ff'); const sn = M('coneHi', fur, .42, .7, .42, 0, -.18, 1.05, Math.PI / 2); M('sphereHi', white, .3, .26, .3, 0, -.22, 1.32); M('sphereHi', ph('#141414'), .14, .11, .12, 0, -.15, 1.44);
+    for (const k of [-1, 1]) M('sphereHi', white, .4, .32, .3, k * .45, -.32, .72);
+    for (const [x, z] of [[-.45, .4], [.45, .4], [-.45, -.4], [.45, -.4]]) { M('capsule', fur, .26, .55, .26, x, -1.0, z); M('sphereHi', white, .3, .16, .34, x, -1.27, z + .05); }
+  }
+  if (f.id === 'control') {   // a puffy cloud underneath
+    const cl = ph('#f4f8ff'), cl2 = ph('#dfe8f4'); [[0, 0, 1.1], [-.7, .1, .8], [.7, .1, .8], [-.35, -.2, .5], [.35, -.2, .5], [0, -.1, -.45], [-.6, 0, -.3], [.6, 0, -.3]].forEach(([x, z, s], i) => M('sphereHi', i % 3 ? cl : cl2, s, s * .6, s, x, -1.05, z));
+  }
+  return g; };
+const _syncChests1326 = syncChests;
+syncChests = function () { _syncChests1326(); for (let i = FLAMES1326.length - 1; i >= 0; i--) { const fl = FLAMES1326[i]; let r = fl; while (r.parent) r = r.parent; if (!r.isScene && !fl.parent) { FLAMES1326.splice(i, 1); continue; }
+  fl.children.forEach((m, j) => { const k = 1 + Math.sin(time * 18 + j * 2) * .12 + Math.random() * .08; m.scale.y = [2.1, 1.8, 1.5][j] * k; m.position.z = m.scale.y / 2; }); }
+  if (FLAMES1326.length > 200) FLAMES1326.splice(0, FLAMES1326.length - 200); };
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -11185,7 +11211,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.25.0';
+const APP_VERSION = '13.26.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
