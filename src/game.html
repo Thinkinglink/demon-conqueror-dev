@@ -5704,7 +5704,7 @@ const fruitIcon0 = (() => {
     const [cx, cy, k] = FACE_AT[f.id] || (FSHAPE[f.id] && FSHAPE[f.id].f) || [50, 52, 1], face = `<g transform="translate(${cx} ${cy}) scale(${k}) translate(-50 -50)"><path d="${EYES}" fill="#fff" stroke="#2a1206" stroke-width="3.5" stroke-linejoin="round"/></g>`;
     return (SPECIAL[f.id] ? (skinC ? SPECIAL[f.id]().replace('<svg ', `<svg style="filter:hue-rotate(${Math.round(hue(skinC) - hue(base.color))}deg) saturate(1.3)" `) : SPECIAL[f.id]()) : FSHAPE[f.id] ? shapedFruit(f) : plainFruit(f)).replace(/<\/svg>$/, face + (FSHAPE[f.id] ? '' : badge(f)) + '</svg>');
   };})();
-const fruitIcon = (...a) => { const u = a[0] && window.FRUIT3D_READY1312 ? fruitIconURL3D(a[0], a.length > 1 ? a[1] : (skinOf(a[0].id) || {}).c) : ''; if (u) return `<svg class="fruit-ic" viewBox="0 0 100 100" aria-hidden="true"><image href="${u}" width="100" height="100"/></svg>`; return fruitIconOld(...a); }, fruitIconOld = (...a) => (a[0] && typeof NEW_FRUIT_ART !== 'undefined' && NEW_FRUIT_ART[a[0].id] ? `<svg viewBox="0 0 100 100" aria-hidden="true">${NEW_FRUIT_ART[a[0].id]}</svg>` : fruitIcon0(...a)).replace('<svg ', '<svg class="fruit-ic" ');      // fruits idle: a gentle bob, squash and tilt
+const fruitIcon = (...a) => { const sk = a[0] ? (a.length > 1 ? a[1] : (skinOf(a[0].id) || {}).c) : null, async = a[0] && window.FRUIT3D_READY1312 && typeof fruitIconAsync1329 === 'function', u = async ? fruitIconAsync1329(a[0], sk) : (a[0] && window.FRUIT3D_READY1312 ? fruitIconURL3D(a[0], sk) : ''); if (u) return `<svg class="fruit-ic" viewBox="0 0 100 100" aria-hidden="true"><image href="${u}" width="100" height="100"/></svg>`; const old = fruitIconOld(...a); return async ? old.replace('<svg ', `<svg data-fic="${a[0].id}|${sk || ''}" `) : old; }, fruitIconOld = (...a) => (a[0] && typeof NEW_FRUIT_ART !== 'undefined' && NEW_FRUIT_ART[a[0].id] ? `<svg viewBox="0 0 100 100" aria-hidden="true">${NEW_FRUIT_ART[a[0].id]}</svg>` : fruitIcon0(...a)).replace('<svg ', '<svg class="fruit-ic" ');      // fruits idle: a gentle bob, squash and tilt
 function itemIcon(id) {
   const it = ITEMS[id] || PASSES[id], c = it.color || '#e9b949', dk = shade(c.length === 7 ? c : '#e9b949', -.45);
   if (PASSES[id]) return `<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="10" width="36" height="28" rx="5" fill="${c}" stroke="${dk}" stroke-width="2"/><path d="M6 20h36" stroke="${dk}" stroke-width="2"/><path d="M24 14l2.5 5h5l-4 3.5 1.5 5-5-3-5 3 1.5-5-4-3.5h5z" fill="#fff8"/></svg>`;
@@ -10317,7 +10317,7 @@ function formExtras1328(form, m) {
     if (m.head) { add(m.head, 'box', armour, 1.9, .5, 1.9, 0, .7, .1); for (const k of [-1, 1]) for (let i = 0; i < 2; i++) add(m.head, 'coneHi', ph('#c8a070'), .26, 1.1 - i * .3, .26, k * (.5 + i * .25), 1.2, -.3 - i * .3, -.7, 0, -k * .3); add(m.head, 'box', lava, 1.2, .1, .1, 0, .75, 1.05); } }
 }
 const _buildFormModel1328 = buildFormModel;
-buildFormModel = function (form) { const m = _buildFormModel1328(form); if (m) try { formExtras1328(form, m); } catch (e) {} return m; };
+buildFormModel = function (form) { const m = _buildFormModel1328(form); if (m) { try { if (typeof fuseForm1329 === 'function') fuseForm1329(m); } catch (e) {} try { formExtras1328(form, m); } catch (e) {} } return m; };
 const _syncFormModel1328 = syncFormModel;
 syncFormModel = function (pX, pY, pBase, scaleMul, P = player, slot = mySlot) { const r = _syncFormModel1328(pX, pY, pBase, scaleMul, P, slot); const m = slot && slot.m, X = m && m.extra1328;
   if (X) { if (X.spin) X.spin.rotation.y = time * 1.3; const moving = Math.hypot(P.vx, P.vy) > 20;
@@ -10326,6 +10326,92 @@ syncFormModel = function (pX, pY, pBase, scaleMul, P = player, slot = mySlot) { 
     if (X.drip && Math.random() < .4) fx.sparks.push({ x: P.x + rand(-30, 30), y: P.y + rand(-30, 30), z: rand(10, 40), vx: 0, vy: 0, vz: -60, t: 0, life: .5, color: X.drip }); }
   return r; };
 Object.assign(TRANSFORMS.kitsune, { color: '#7a5aff', tint: ['#4a2a8a', '#7af0ff', '#7af0ff'] });
+// ================= 13.29: connected high-poly models. Each model's separate primitives are blended into one smooth surface (signed distance fields + surface nets) =================
+function prim1329(mesh, toA) {   // describe one mesh as a distance-field primitive in the anchor's space
+  const g = mesh.geometry, mat = mesh.material; if (!g || Array.isArray(mat) || !mat || !mat.color || mat.isMeshBasicMaterial || mat.transparent) return null;
+  const t = g.type || ''; let kind = /Sphere|Icosa|Polyhedron|Octa|Dodeca/.test(t) ? 'ell' : /Box/.test(t) ? 'box' : /Cone|Cylinder/.test(t) ? 'cyl' : /Torus/.test(t) ? 'tor' : /Lathe/.test(t) ? 'cap' : null;
+  if (mesh.userData.radial1329) kind = 'rad'; if (!kind) return null;
+  g.computeBoundingBox(); const bb = g.boundingBox, c = bb.getCenter(new THREE.Vector3()), h = bb.getSize(new THREE.Vector3()).multiplyScalar(.5);
+  const M = toA.clone().multiply(mesh.matrixWorld), inv = M.clone().invert(), e = M.elements;
+  const sx = Math.hypot(e[0], e[1], e[2]), sy = Math.hypot(e[4], e[5], e[6]), sz = Math.hypot(e[8], e[9], e[10]), sc = Math.min(sx, sy, sz);
+  const wb = bb.clone().applyMatrix4(M), cw = wb.getCenter(new THREE.Vector3()), R = wb.getSize(new THREE.Vector3()).length() / 2, minDim = Math.min(h.x * sx, h.y * sy, h.z * sz) * 2;
+  const P = { kind, mesh, inv, ie: inv.elements, sc, c, h, cw, R, minDim, wb, col: mesh.userData.col1329 ? new THREE.Color(mesh.userData.col1329) : mat.color.clone() };
+  if (kind === 'cyl') { const pr = g.parameters || {}; P.r1 = pr.radiusTop ?? h.x; P.r2 = pr.radiusBottom ?? h.x; P.hh = (pr.height ?? h.y * 2) / 2; }
+  if (kind === 'tor') { const pr = g.parameters || {}; P.R0 = pr.radius ?? .5; P.r0 = pr.tube ?? .12; }
+  if (kind === 'rad') P.rad = mesh.userData.radial1329;
+  return P;
+}
+function sdf1329(P, x, y, z) {
+  const e = P.ie; let qx = e[0] * x + e[4] * y + e[8] * z + e[12] - P.c.x, qy = e[1] * x + e[5] * y + e[9] * z + e[13] - P.c.y, qz = e[2] * x + e[6] * y + e[10] * z + e[14] - P.c.z, d;
+  if (P.kind === 'ell') { const a = P.h.x || 1e-3, b = P.h.y || 1e-3, cc = P.h.z || 1e-3, k0 = Math.hypot(qx / a, qy / b, qz / cc), k1 = Math.hypot(qx / (a * a), qy / (b * b), qz / (cc * cc)) || 1e-6; d = k0 * (k0 - 1) / k1; }
+  else if (P.kind === 'box') { const dx = Math.abs(qx) - P.h.x, dy = Math.abs(qy) - P.h.y, dz = Math.abs(qz) - P.h.z; d = Math.hypot(Math.max(dx, 0), Math.max(dy, 0), Math.max(dz, 0)) + Math.min(Math.max(dx, dy, dz), 0); }
+  else if (P.kind === 'cyl') { const t = Math.min(1, Math.max(0, (qy + P.hh) / (2 * P.hh))), r = P.r2 + (P.r1 - P.r2) * t, dr = Math.hypot(qx, qz) - r, dy = Math.abs(qy) - P.hh; d = Math.hypot(Math.max(dr, 0), Math.max(dy, 0)) + Math.min(Math.max(dr, dy), 0); }
+  else if (P.kind === 'tor') { const q = Math.hypot(qx, qy) - P.R0; d = Math.hypot(q, qz) - P.r0; }
+  else if (P.kind === 'cap') { const r = Math.min(P.h.x, P.h.z), hy = Math.max(0, P.h.y - r), yy = Math.max(-hy, Math.min(hy, qy)); d = Math.hypot(qx, qy - yy, qz) - r; }
+  else { const L = Math.hypot(qx, qy, qz) || 1e-6, T = P.rad, th = Math.acos(Math.max(-1, Math.min(1, qy / L))) / Math.PI * (T.nt - 1), ph = (Math.atan2(qz, qx) / TAU + 1) % 1 * T.np;
+    const i0 = Math.floor(th), j0 = Math.floor(ph) % T.np, i1 = Math.min(T.nt - 1, i0 + 1), j1 = (j0 + 1) % T.np, ft = th - i0, fp = ph - Math.floor(ph), A = T.r;
+    const r = (A[i0 * T.np + j0] * (1 - fp) + A[i0 * T.np + j1] * fp) * (1 - ft) + (A[i1 * T.np + j0] * (1 - fp) + A[i1 * T.np + j1] * fp) * ft; d = (L - r) * .85; }
+  return d * P.sc;
+}
+function radial1329(mesh) {   // a star-shaped body: its radius in every direction, measured once by casting rays at it
+  const g = mesh.geometry; if (g.userData.radial1329) return g.userData.radial1329; const nt = 33, np = 64, r = new Float32Array(nt * np), rc = new THREE.Raycaster(), tmp = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }));
+  r.fill(-1); const P = g.attributes.position;   // fast path: bin the vertices by direction; only directions no vertex covers are measured with a ray
+  for (let v = 0; v < P.count; v++) { const x = P.getX(v), y = P.getY(v), z = P.getZ(v), L = Math.hypot(x, y, z); if (L < 1e-4) continue; const i = Math.round(Math.acos(Math.max(-1, Math.min(1, y / L))) / Math.PI * (nt - 1)), j = Math.round((Math.atan2(z, x) / TAU + 1) % 1 * np) % np; if (L > r[i * np + j]) r[i * np + j] = L; }
+  for (let i = 0; i < nt; i++) for (let j = 0; j < np; j++) { if (r[i * np + j] > 0) continue; const th = i / (nt - 1) * Math.PI, ph = j / np * TAU, d = new THREE.Vector3(Math.sin(th) * Math.cos(ph), Math.cos(th), Math.sin(th) * Math.sin(ph));
+    rc.set(d.clone().multiplyScalar(6), d.clone().negate()); const hit = rc.intersectObject(tmp)[0]; r[i * np + j] = hit ? 6 - hit.distance : 1; }
+  return g.userData.radial1329 = { nt, np, r };
+}
+function fuse1329(anchor, meshes, res = 48, k = .12, matFn) {
+  anchor.updateMatrixWorld(true); const toA = anchor.matrixWorld.clone().invert(); let P = meshes.map(m => prim1329(m, toA)).filter(Boolean); if (P.length < 2) return null;
+  const B = new THREE.Box3(); P.forEach(p => B.union(p.wb)); const S = B.getSize(new THREE.Vector3()), vox = Math.max(S.x, S.y, S.z) / res;
+  P = P.filter(p => p.minDim > vox * 1.2); if (P.length < 2) return null; B.makeEmpty(); P.forEach(p => B.union(p.wb)); B.expandByScalar(k + vox * 2);
+  const CK = matFn && matFn.key, CACHE = (window.FUSE1329 ||= {});
+  if (CK && CACHE[CK]) { const fused = new THREE.Mesh(CACHE[CK], matFn()); fused.castShadow = fused.receiveShadow = true; for (const p of P) if (p.mesh.parent) p.mesh.parent.remove(p.mesh); anchor.add(fused); return fused; }
+  const o = B.min, nx = Math.ceil((B.max.x - o.x) / vox) + 1, ny = Math.ceil((B.max.y - o.y) / vox) + 1, nz = Math.ceil((B.max.z - o.z) / vox) + 1, F = new Float32Array(nx * ny * nz);
+  const field = (x, y, z) => { let d = 1e9; for (const p of P) { const dc = Math.hypot(x - p.cw.x, y - p.cw.y, z - p.cw.z) - p.R; if (dc > d + k) continue; const v = sdf1329(p, x, y, z); if (d === 1e9) d = v; else { const hh = Math.max(k - Math.abs(d - v), 0) / k; d = Math.min(d, v) - hh * hh * k * .25; } } return d; };
+  for (let z = 0; z < nz; z++) for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) F[(z * ny + y) * nx + x] = field(o.x + x * vox, o.y + y * vox, o.z + z * vox);
+  // surface nets: one vertex per cell the surface passes through, one quad per crossing edge
+  const idx = new Int32Array((nx - 1) * (ny - 1) * (nz - 1)).fill(-1), pos = [], tris = [], at = (x, y, z) => F[(z * ny + y) * nx + x];
+  const E = [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]], cx = [0, 1, 0, 1, 0, 1, 0, 1], cy = [0, 0, 1, 1, 0, 0, 1, 1], cz = [0, 0, 0, 0, 1, 1, 1, 1], v = new Float32Array(8);
+  for (let z = 0; z < nz - 1; z++) for (let y = 0; y < ny - 1; y++) for (let x = 0; x < nx - 1; x++) {
+    let neg = 0; for (let i = 0; i < 8; i++) { v[i] = at(x + cx[i], y + cy[i], z + cz[i]); if (v[i] < 0) neg++; } if (!neg || neg === 8) continue;
+    let sx = 0, sy = 0, sz = 0, n = 0; for (const [a, b] of E) { if ((v[a] < 0) === (v[b] < 0)) continue; const t = v[a] / (v[a] - v[b]); sx += cx[a] + (cx[b] - cx[a]) * t; sy += cy[a] + (cy[b] - cy[a]) * t; sz += cz[a] + (cz[b] - cz[a]) * t; n++; }
+    idx[(z * (ny - 1) + y) * (nx - 1) + x] = pos.length / 3; pos.push(o.x + (x + sx / n) * vox, o.y + (y + sy / n) * vox, o.z + (z + sz / n) * vox); }
+  const cell = (x, y, z) => x < 0 || y < 0 || z < 0 || x >= nx - 1 || y >= ny - 1 || z >= nz - 1 ? -1 : idx[(z * (ny - 1) + y) * (nx - 1) + x];
+  const quad = (a, b, c, d, flip) => { if (a < 0 || b < 0 || c < 0 || d < 0) return; if (flip) tris.push(a, c, b, a, d, c); else tris.push(a, b, c, a, c, d); };
+  for (let z = 1; z < nz - 1; z++) for (let y = 1; y < ny - 1; y++) for (let x = 0; x < nx - 1; x++) { const s0 = at(x, y, z) < 0, s1 = at(x + 1, y, z) < 0; if (s0 !== s1) quad(cell(x, y - 1, z - 1), cell(x, y, z - 1), cell(x, y, z), cell(x, y - 1, z), s1); }
+  for (let z = 1; z < nz - 1; z++) for (let y = 0; y < ny - 1; y++) for (let x = 1; x < nx - 1; x++) { const s0 = at(x, y, z) < 0, s1 = at(x, y + 1, z) < 0; if (s0 !== s1) quad(cell(x - 1, y, z - 1), cell(x - 1, y, z), cell(x, y, z), cell(x, y, z - 1), s1); }
+  for (let z = 0; z < nz - 1; z++) for (let y = 1; y < ny - 1; y++) for (let x = 1; x < nx - 1; x++) { const s0 = at(x, y, z) < 0, s1 = at(x, y, z + 1) < 0; if (s0 !== s1) quad(cell(x - 1, y - 1, z), cell(x, y - 1, z), cell(x, y, z), cell(x - 1, y, z), s1); }
+  if (!tris.length) return null;
+  // colours: each vertex takes the colour of the parts closest to it, softly blended across the joins
+  const col = new Float32Array(pos.length), tmp = new THREE.Color();
+  for (let i = 0; i < pos.length; i += 3) { let wsum = 0, r = 0, gg = 0, bb = 0, ds = P.map(p => sdf1329(p, pos[i], pos[i + 1], pos[i + 2])), dm = Math.min(...ds);
+    ds.forEach((d, j) => { const w = Math.exp(-(d - dm) / (k * .35)); wsum += w; r += P[j].col.r * w; gg += P[j].col.g * w; bb += P[j].col.b * w; }); col[i] = r / wsum; col[i + 1] = gg / wsum; col[i + 2] = bb / wsum; }
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); geo.setIndex(tris); geo.computeVertexNormals();
+  if (CK) CACHE[CK] = geo;
+  const fused = new THREE.Mesh(geo, matFn ? matFn() : new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 40 })); fused.castShadow = true; fused.receiveShadow = true;
+  for (const p of P) if (p.mesh.parent) p.mesh.parent.remove(p.mesh); anchor.add(fused); return fused;
+}
+// fruits: body and parts become one sculpture (the face, stem, leaves, flames and see-through parts stay as crisp details on top)
+const _makeFruit3D1329 = makeFruit3D;
+makeFruit3D = function (f, skinC) { const g = _makeFruit3D1329(f, skinC); try { const body = g.children[0]; if (body && body.isMesh) { body.userData.radial1329 = radial1329(body); body.userData.col1329 = skinC || f.color; const bm = body.material;
+    const mf = () => new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: bm.roughness ?? .38, metalness: bm.metalness || 0, clearcoat: .6, clearcoatRoughness: .25, transparent: bm.transparent, opacity: bm.opacity }); mf.key = 'fruit|' + f.id + '|' + (skinC || '');
+    const fz = fuse1329(g, g.children.filter(c => c.isMesh), 54, .1, mf);
+    if (fz) { g.children.splice(g.children.indexOf(fz), 1); g.children.unshift(fz); } } } catch (e) {} return g; };
+// menu pictures are made in the background, one per frame, so opening a big list never freezes the game; the old picture shows until the new one is ready
+const ICQ1329 = [];
+function fruitIconAsync1329(f, skinC) { const k = f.id + '|' + (skinC || ''); if (typeof FICON1312 !== 'undefined' && FICON1312[k]) return FICON1312[k]; if (!ICQ1329.some(q => q.k === k)) { ICQ1329.push({ k, f, skinC }); if (ICQ1329.length === 1) setTimeout(iconPump1329, 30); } return ''; }
+function iconPump1329() { const q = ICQ1329.shift(); if (!q) return; let u = ''; try { u = fruitIconURL3D(q.f, q.skinC); } catch (e) {}
+  if (u) document.querySelectorAll('svg[data-fic]').forEach(el => { if (el.getAttribute('data-fic') === q.k) el.outerHTML = `<svg class="fruit-ic" viewBox="0 0 100 100" aria-hidden="true"><image href="${u}" width="100" height="100"/></svg>`; });
+  if (ICQ1329.length) setTimeout(iconPump1329, 16); }
+// transformations: every moving part (body, each leg, head, neck, tail piece, wing) is fused on its own, so animation still works
+function fuseForm1329(m) {
+  if (!m) return; const anchors = new Set();
+  if (m.kind === 'beast') { anchors.add(m.root); for (const k of ['legs', 'arms', 'tails', 'heads', 'wings', 'trunks', 'spins', 'puffs']) (m[k] || []).forEach(a => anchors.add(a)); }
+  else if (m.kind === 'statue') return;
+  else (m.root ? [m.root] : m.segs).forEach(r => r.traverse(o => { if (o.isGroup || o === r) anchors.add(o); }));
+  for (const a of anchors) { const list = []; const walk = n => { for (const c of n.children) { if (c !== a && anchors.has(c)) continue; if (c.isMesh) list.push(c); walk(c); } }; walk(a); if (list.length >= 2) fuse1329(a, list, 40, .25); }
+}
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -11283,7 +11369,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.28.0';
+const APP_VERSION = '13.29.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
