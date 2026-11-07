@@ -9673,7 +9673,18 @@ function sticker1313(emb, a, b) {
     if (mode === 'white') return `<path d="${d}" fill="${stroked ? 'none' : '#fff'}" stroke="#fff" stroke-width="${(stroked ? (w || 4) : 0) + 13}" stroke-linejoin="round" stroke-linecap="round"/>`;
     if (mode === 'ink') return `<path d="${d}" fill="${stroked ? 'none' : ink}" stroke="${ink}" stroke-width="${(stroked ? (w || 4) : 0) + 5}" stroke-linejoin="round" stroke-linecap="round"/>`;
     return `<path d="${d}" fill="${stroked ? 'none' : fillOf(f)}"${stroked ? ` stroke="${fillOf(s)}" stroke-width="${w || 4}" stroke-linecap="round" stroke-linejoin="round"` : ''}/>`; }).join('');
-  return `<svg viewBox="-10 -10 120 120" aria-hidden="true" class="stick-ic"><defs>${grad('a', a)}${grad('b', b)}</defs><g transform="translate(2.5 3.5)" opacity=".35">${draw('ink')}</g>${draw('white')}${draw('ink')}${draw('fill')}</svg>`;
+  // 13.17: illustrated finish. A colour glow and burst behind, an outer glow, gloss and shade inside the shapes, sparkles around
+  const solids = shapes.filter(q => q[1] !== 'n').map(q => `<path d="${q[0]}"/>`).join(''), star = (x, y, r) => `M${x} ${y - r}C${x + r * .18} ${y - r * .18} ${x + r * .18} ${y - r * .18} ${x + r} ${y}C${x + r * .18} ${y + r * .18} ${x + r * .18} ${y + r * .18} ${x} ${y + r}C${x - r * .18} ${y + r * .18} ${x - r * .18} ${y + r * .18} ${x - r} ${y}C${x - r * .18} ${y - r * .18} ${x - r * .18} ${y - r * .18} ${x} ${y - r}Z`;
+  let rays = ''; for (let i = 0; i < 12; i++) { const an = i / 12 * TAU, an2 = an + .12; rays += `M50 50L${(50 + Math.cos(an) * 62).toFixed(1)} ${(50 + Math.sin(an) * 62).toFixed(1)}L${(50 + Math.cos(an2) * 62).toFixed(1)} ${(50 + Math.sin(an2) * 62).toFixed(1)}Z`; }
+  const sparks = [[6, 10, 7], [94, 16, 5], [90, 90, 6]].map(([x, y, r]) => `<path d="${star(x, y, r)}" fill="#fff" stroke="${ink}" stroke-width="1.6"/>`).join('');
+  return `<svg viewBox="-10 -10 120 120" aria-hidden="true" class="stick-ic"><defs>${grad('a', a)}${grad('b', b)}`
+    + `<radialGradient id="${id}g"><stop offset="0" stop-color="${b}" stop-opacity=".8"/><stop offset=".55" stop-color="${a}" stop-opacity=".35"/><stop offset="1" stop-color="${a}" stop-opacity="0"/></radialGradient>`
+    + `<linearGradient id="${id}h" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".7" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient>`
+    + `<clipPath id="${id}c">${solids}</clipPath><filter id="${id}f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3.2"/></filter></defs>`
+    + `<circle cx="50" cy="50" r="58" fill="url(#${id}g)"/><path d="${rays}" fill="${b}" opacity=".16"/>`
+    + `<g filter="url(#${id}f)" opacity=".85">${draw('white').replace(/#fff/g, shade1313(a, .35))}</g>`
+    + `<g transform="translate(2.5 3.5)" opacity=".35">${draw('ink')}</g>${draw('white')}${draw('ink')}${draw('fill')}`
+    + `<rect x="-10" y="-10" width="120" height="120" fill="url(#${id}h)" clip-path="url(#${id}c)"/>${sparks}</svg>`;
 }
 function fruitSticker1313(f) { const sk = skinOf(f.id), base = (sk && sk.c) || f.color, C = !sk && FRUIT_STICKC1313[f.id]; return sticker1313(FRUIT_STICK1313[f.id] || 'burst', C ? C[0] : base, C ? C[1] : shade1313(base, .55)); }
 function styleSticker1313(id) {
@@ -10705,7 +10716,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.16.0';
+const APP_VERSION = '13.17.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
