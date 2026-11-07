@@ -10293,7 +10293,8 @@ function formExtras1328(form, m) {
   if (form === 'trex') { const bone = ph('#e8c84a', 40), brown = ph('#6a4a3a', 30);
     if (head) { add(head, 'box', bone, 1.25, .6, 1.2, 0, .35, .2); for (let i = 0; i < 7; i++) add(head, 'coneHi', ph('#f8f4e8'), .1, .3, .1, -.45 + i * .15, -.15, .78, Math.PI); for (const k of [-1, 1]) add(head, 'coneHi', bone, .2, .6, .2, k * .45, .75, 0, 0, 0, -k * .4); }
     spine(9, bone, w * .07, h * .2, .35, -.6); for (const k of [-1, 1]) add(root, 'box', brown, w * .1, h * .25, S.z * .3, C.x + k * w * .4, C.y, C.z); }
-  if (form === 'yeti') { const ice = new THREE.MeshPhongMaterial({ color: '#7ae0ff', emissive: '#1a6a9a', shininess: 140, flatShading: true, transparent: true, opacity: .92 }), chain = ph('#4a4a52', 100);
+  if (form === 'yeti' && TRANSFORMS.yeti.geo === 'FrostTitan') { const chain = ph('#4a4a52', 100); arms.forEach(A => { for (let i = 0; i < 3; i++) add(A, 'torusHi', chain, 1.15, 1.15, 1.5, 0, -2.0 - i * .22, 0, Math.PI / 2 + (i % 2) * .6); }); }
+  else if (form === 'yeti') { const ice = new THREE.MeshPhongMaterial({ color: '#7ae0ff', emissive: '#1a6a9a', shininess: 140, flatShading: true, transparent: true, opacity: .92 }), chain = ph('#4a4a52', 100);
     for (let i = 0; i < 9; i++) { const a = (i - 4) * .3; add(root, 'cone4', ice, w * .07, h * (.14 + (i % 3) * .05), w * .07, C.x + Math.sin(a) * w * .35, top - h * .22 - Math.abs(a) * h * .1, C.z - S.z * .35, -.6, 0, -a); }
     arms.forEach(A => { for (let i = 0; i < 3; i++) add(A, 'torusHi', chain, w * .14, w * .14, w * .2, 0, -h * .32 - i * h * .025, 0, Math.PI / 2 + (i % 2) * .6); });
     if (head) for (const k of [-1, 1]) { add(head, 'coneHi', ph('#c8a070'), .2, .7, .2, k * .45, .6, -.1, -.4, 0, -k * .8); add(head, 'sphereHi', gl('#5ad8ff'), .14, .1, .08, k * .25, .15, .6); }
@@ -10410,8 +10411,29 @@ function fuseForm1329(m) {
   if (m.kind === 'beast') { anchors.add(m.root); for (const k of ['legs', 'arms', 'tails', 'heads', 'wings', 'trunks', 'spins', 'puffs']) (m[k] || []).forEach(a => anchors.add(a)); }
   else if (m.kind === 'statue') return;
   else (m.root ? [m.root] : m.segs).forEach(r => r.traverse(o => { if (o.isGroup || o === r) anchors.add(o); }));
-  for (const a of anchors) { const list = []; const walk = n => { for (const c of n.children) { if (c !== a && anchors.has(c)) continue; if (c.isMesh) list.push(c); walk(c); } }; walk(a); if (list.length >= 2) fuse1329(a, list, 40, .25); }
+  for (const a of anchors) { const list = []; const walk = n => { for (const c of n.children) { if (c !== a && anchors.has(c)) continue; if (c.isMesh) list.push(c); walk(c); } }; walk(a); if (list.length >= 2) fuse1329(a, list, m.kind === 'beast' ? 60 : 40, m.kind === 'beast' ? .18 : .25); }
 }
+// ================= 13.30: the Yeti becomes a detailed Frost Titan: sculpted chest and abs, shaggy fur mantle, cuffs and boots, horned snouted head, glowing markings, back crystals (original design) =================
+{ const FUR = '#eef4ff', FUR2 = '#d8e4f4', SK = '#8a8ad8', SK2 = '#a8a8ec', SKD = '#6a6ab8', GLOW = '!#5ad8ff', CLAW = '!#eef6ff', CLOTH = '#2a2a3a';
+  const mantle = Array.from({ length: 12 }, (_, i) => { const a = i / 12 * TAU; return ['sphereHi', Math.cos(a) * 1.75, 5.85 + Math.sin(a * 2) * .12, Math.sin(a) * 1.05 - .1, 1.25, 1.05, 1.15, '', i % 2 ? FUR : FUR2]; });
+  const abs = [-1, 1].flatMap(k => [3.45, 3.9, 4.35].map(y => ['sphereHi', k * .33, y, .78, .52, .38, .3, '', SK2]));
+  const crystals = Array.from({ length: 9 }, (_, i) => { const a = (i - 4) * .32; return ['cone4', Math.sin(a) * 1.5, 6.1 - Math.abs(a) * .6, -1.05, .32, 1.1 + (i % 3) * .45, .32, '', '!#8ae6ff', -.55 - Math.abs(a) * .2]; });
+  const arm = k => [['capsule', k * 2.35, 5.45, 0, 1.25, 2.6, 1.25, 'arm', FUR2],
+    ['sphereHi', 0, .15, 0, 2.0, 1.6, 1.9, 'on', FUR], ['sphereHi', 0, -2.9, .15, 1.65, 1.9, 1.6, 'on', SK], ['sphereHi', 0, -2.35, 0, 2.0, .85, 2.0, 'on', FUR], ['sphereHi', 0, -4.0, .3, 1.2, 1.05, 1.15, 'on', SK2],
+    ...[-.32, 0, .32].map(x => ['coneHi', x, -4.55, .55, .14, .42, .14, 'on', CLAW, 2.6])];
+  const leg = k => [['cylHi', k * .85, 2.75, 0, 1.45, 2.1, 1.45, 'leg', SK], ['sphereHi', 0, -.95, 0, 1.85, .8, 1.85, 'on', FUR], ['sphereHi', 0, -1.85, 0, 1.75, .75, 1.75, 'on', FUR2],
+    ['sphereHi', 0, -2.3, .35, 1.55, .6, 2.05, 'on', SKD], ...[-.4, 0, .4].map(x => ['coneHi', x, -2.4, 1.3, .14, .4, .14, 'on', CLAW, 1.5708])];
+  BEAST_GEO.FrostTitan = [
+    ['sphereHi', 0, 2.95, 0, 2.3, 1.4, 1.6, '', FUR2], ['sphereHi', 0, 3.95, .1, 2.0, 1.7, 1.45, '', SK], ...abs, ['sphereHi', 0, 5.0, 0, 3.5, 2.3, 2.1, '', SK],
+    ['sphereHi', -.62, 5.05, .55, 1.45, 1.05, 1.0, '', SK2], ['sphereHi', .62, 5.05, .55, 1.45, 1.05, 1.0, '', SK2], ['sphereHi', 0, 5.95, -.35, 2.5, 1.4, 1.9, '', FUR], ...mantle,
+    ['box', 0, 2.45, .78, 1.7, 1.7, .22, '', CLOTH], ['box', 0, 2.45, -.78, 1.9, 1.5, .22, '', CLOTH], ['torusHi', 0, 3.15, 0, 2.35, 2.35, 2.1, '', '#c8b8a0', 1.5708],
+    ['box', -.62, 5.05, 1.06, .55, .08, .05, '', GLOW], ['box', .62, 5.05, 1.06, .55, .08, .05, '', GLOW], ['box', 0, 4.35, .95, .08, 1.1, .05, '', GLOW], ...crystals,
+    ['sphereHi', 0, 7.0, .55, 1.5, 1.4, 1.4, 'head', FUR], ['sphereHi', 0, -.08, .55, .95, .85, .55, 'on', SK], ['sphereHi', 0, .26, .74, 1.05, .26, .36, 'on', SKD], ['sphereHi', 0, -.32, .86, .62, .42, .46, 'on', SK2],
+    ['sphereHi', 0, -.14, 1.1, .26, .16, .16, 'on', '#2a2a4a'], ['sphereHi', -.28, .12, .99, .17, .1, .08, 'on', GLOW], ['sphereHi', .28, .12, .99, .17, .1, .08, 'on', GLOW], ['sphereHi', 0, -.56, .96, .46, .12, .1, 'on', '#1a0a1a'],
+    ['coneHi', -.16, -.56, 1.0, .08, .22, .08, 'on', CLAW, Math.PI], ['coneHi', .16, -.56, 1.0, .08, .22, .08, 'on', CLAW, Math.PI], ['sphereHi', -.72, .2, -.1, .62, .72, .62, 'on', FUR2], ['sphereHi', .72, .2, -.1, .62, .72, .62, 'on', FUR2],
+    ['coneHi', -.6, .75, -.15, .24, 1.0, .24, 'on', '#b08a5a', -.6], ['coneHi', .6, .75, -.15, .24, 1.0, .24, 'on', '#b08a5a', -.6],
+    ...arm(-1), ...arm(1), ...leg(-1), ...leg(1)];
+  Object.assign(TRANSFORMS.yeti, { geo: 'FrostTitan' }); }
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -11369,7 +11391,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.29.0';
+const APP_VERSION = '13.30.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
