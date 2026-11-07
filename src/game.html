@@ -5778,8 +5778,8 @@ const skillUI = (() => {
     document.querySelectorAll('.slot').forEach(sl => {
       const slot = sl.dataset.slot; sl.classList.toggle('active', s.slot === slot);
       let ic, ms = '', none = false, label;
-      if (slot === 'fruit') { const f = FRUIT_BY_ID[s.currentFruit]; none = !f; ic = f ? fruitIcon(f) : '<svg viewBox="0 0 32 32"><circle cx="16" cy="17" r="10" fill="none" stroke="#5d6f8c" stroke-width="2" stroke-dasharray="4 3"/></svg>'; if (f) ms = 'M' + GameData.mastery('fruit:' + f.id).lvl; label = f ? `Fruit: ${f.name}` : 'Fruit: none eaten'; }
-      else { const id = slot === 'style' ? s.equip.style : s.equip[slot]; none = !id; ic = id ? itemIcon(id) : '<svg viewBox="0 0 32 32"><rect x="6" y="6" width="20" height="20" rx="4" fill="none" stroke="#5d6f8c" stroke-width="2" stroke-dasharray="4 3"/></svg>'; if (id) ms = 'M' + GameData.mastery(id).lvl; label = id ? `${slot}: ${ITEMS[id].name}` : `${slot}: none equipped`; }
+      if (slot === 'fruit') { const f = FRUIT_BY_ID[s.currentFruit]; none = !f; ic = f ? (window.FRUIT3D_READY1312 ? fruitSticker1313(f) : fruitIcon(f)) : '<svg viewBox="0 0 32 32"><circle cx="16" cy="17" r="10" fill="none" stroke="#5d6f8c" stroke-width="2" stroke-dasharray="4 3"/></svg>'; if (f) ms = 'M' + GameData.mastery('fruit:' + f.id).lvl; label = f ? `Fruit: ${f.name}` : 'Fruit: none eaten'; }
+      else { const id = slot === 'style' ? s.equip.style : s.equip[slot]; none = !id; ic = id ? (slot === 'style' && window.FRUIT3D_READY1312 ? styleSticker1313(id) : itemIcon(id)) : '<svg viewBox="0 0 32 32"><rect x="6" y="6" width="20" height="20" rx="4" fill="none" stroke="#5d6f8c" stroke-width="2" stroke-dasharray="4 3"/></svg>'; if (id) ms = 'M' + GameData.mastery(id).lvl; label = id ? `${slot}: ${ITEMS[id].name}` : `${slot}: none equipped`; }
       sl.querySelector('.ic').innerHTML = ic; sl.querySelector('.ms').textContent = ms; sl.classList.toggle('none', none); sl.setAttribute('aria-label', label);
     });
     $('busoBtn').hidden = !s.abilities.includes('buso'); $('kenBtn').hidden = !s.abilities.includes('ken');
@@ -9337,10 +9337,10 @@ const LOOK1312 = {
   rocket: ['round', 'swirl', '#d83a2a', 'fins'], spin: ['round', 'swirl', '#fff0b8'], blade: ['tall', 'facets', '#eef6fc'], spring: ['tall', 'rings', '#3a8a2a'],
   bomb: ['round', 'spots', '#ff7a2a', 'fuse'], smoke: ['round', 'swirl', '#f4f7fa'], spike: ['round', 'spots', '#4a3220', 'spikes'], flame: ['round', 'flames', '#ffe14a', 'flameCrown'],
   ice: ['round', 'swirl', '#ffffff'], sand: ['squat', 'swirl', '#9a7432'], dark: ['round', 'swirl', '#b07aff', '', '#6a3aa8'], eagle: ['pear', 'scales', '#f4ead8', 'wings'],
-  diamond: ['crystal', 'facets', '#ffffff'], light: ['round', 'rays', '#ffc81a', 'rays'], rubber: ['round', 'swirl', '#ffffff'], ghost: ['round', 'swirl', '#5a6a90', '', '#8aa0c8'],
-  magma: ['round', 'cracks', '#ff5a1a', '', '#3a2a20'], quake: ['round', 'cracks', '#6aa8ff'], buddha: ['squat', 'swirl', '#fff2b8', 'halo'], love: ['round', 'hearts', '#ffffff', '', '#ff4f9a'],
-  creation: ['round', 'stars', '#fff6c8'], spider: ['round', 'web', '#e8e8e8', '', '#3a3a3a'], sound: ['round', 'rings', '#ffffff'], phoenix: ['pear', 'flames', '#ffe14a', 'flameCrown'],
-  portal: ['round', 'rings', '#ffffff', 'ring'], lightning: ['round', 'bolts', '#fff36a'], pain: ['round', 'swirl', '#ff9a9a'], blizzard: ['round', 'swirl', '#ffffff'],
+  diamond: ['cube', 'facets', '#ffffff'], light: ['round', 'rays', '#ffc81a', 'rays'], rubber: ['round', 'swirl', '#ffffff'], ghost: ['round', 'swirl', '#5a6a90', '', '#8aa0c8'],
+  magma: ['round', 'cracks', '#ff5a1a', '', '#3a2a20'], quake: ['cube', 'cracks', '#6aa8ff'], buddha: ['squat', 'swirl', '#fff2b8', 'halo'], love: ['round', 'hearts', '#ffffff', '', '#ff4f9a'],
+  creation: ['cube', 'stars', '#fff6c8'], spider: ['round', 'web', '#e8e8e8', '', '#3a3a3a'], sound: ['round', 'rings', '#ffffff'], phoenix: ['pear', 'flames', '#ffe14a', 'flameCrown'],
+  portal: ['round', 'rings', '#ffffff', 'ring'], lightning: ['round', 'bolts', '#fff36a'], pain: ['round', 'swirl', '#ff9a9a'], blizzard: ['cube', 'swirl', '#ffffff'],
   gravity: ['round', 'rings', '#d8b8ff', 'orbit'], mammoth: ['lobed', 'fur', '#5a3a1a', 'tusks'], trex: ['tall', 'scales', '#2e4a1a', 'horns'], dough: ['round', 'swirl', '#ff9ac8'],
   shadow: ['round', 'swirl', '#8a5aff', '', '#4a2a7a'], venom: ['round', 'scales', '#b8ff4a', '', '#4a8a2a'], gas: ['round', 'swirl', '#e8fff0'], magnet: ['round', 'rings', '#e8eef4'],
   singularity: ['round', 'stars', '#ffffff', 'orbit', '#4a2a7a'], volcanic: ['round', 'cracks', '#ffb02a', '', '#3a2a20'], chrono: ['round', 'rings', '#fff2b8', 'ring'], kinetic: ['round', 'bolts', '#ffffff'],
@@ -9349,7 +9349,7 @@ const LOOK1312 = {
   cosmic: ['round', 'stars', '#ffffff', '', '#6a3aa8'], spirit: ['round', 'swirl', '#1a1a2a'], yeti: ['round', 'fur', '#ffffff', 'horns'], tiger: ['round', 'stripes', '#1a1208', 'ears'],
   kitsune: ['pear', 'swirl', '#ffffff', 'ears', '#7a5aff'], control: ['round', 'rings', '#ffffff'], dragon: ['tall', 'scales', '#ffb02a', 'horns'], water: ['pear', 'bubbles', '#e8fbff'],
   happiness: ['round', 'hearts', '#ff8ab8'], leviathan: ['tall', 'scales', '#9afcff', 'horns'], oni: ['round', 'swirl', '#ffd200', 'horns'], celestial: ['round', 'stars', '#ffffff', 'halo'],
-  overgrown: ['lobed', 'veins', '#a8ff6a', 'leaves'], cardboard: ['crystal', 'facets', '#e8d0a0'],
+  overgrown: ['lobed', 'veins', '#a8ff6a', 'leaves'], absoluteZero: ['cube', 'swirl', '#7ad8ff'], cardboard: ['crystal', 'facets', '#e8d0a0'],
 };
 const GLOW1312 = new Set(['flame', 'light', 'magma', 'phoenix', 'lightning', 'volcanic', 'plasma', 'cyber', 'cosmic', 'kitsune', 'storm', 'venom', 'void', 'singularity', 'celestial', 'dark', 'portal']);
 const col1312 = (c, k) => { const o = new THREE.Color(c); return '#' + (k >= 0 ? o.lerp(new THREE.Color('#ffffff'), k) : o.lerp(new THREE.Color('#000000'), -k)).getHexString(); };
@@ -9390,6 +9390,7 @@ const BODY1312 = {};
 function body1312(shape) {
   if (BODY1312[shape]) return BODY1312[shape];
   if (shape === 'crystal') return BODY1312[shape] = new THREE.IcosahedronGeometry(1, 1);
+  if (shape === 'cube') { const b = roundBox(.2, 5); b.scale(1.72, 1.72, 1.72); b.computeVertexNormals(); return BODY1312[shape] = b; }
   const g = new THREE.SphereGeometry(1, 56, 36), p = g.attributes.position, v = new THREE.Vector3();
   for (let i = 0; i < p.count; i++) {
     v.fromBufferAttribute(p, i); let { x, y, z } = v; const t = (y + 1) / 2;
@@ -9411,7 +9412,12 @@ function makeFruit3D(f, skinC) {
     flatShading: L[0] === 'crystal', transparent: f.id === 'ghost', opacity: f.id === 'ghost' ? .82 : 1,
     ...(glow ? { emissive: new THREE.Color('#ffffff'), emissiveMap: skinTex1312(f.id, base, pat, L[1], true), emissiveIntensity: .75 } : {}) });
   const body = new THREE.Mesh(body1312(L[0]), mat); body.castShadow = true; g.add(body);
-  const top = L[0] === 'tall' ? 1.06 : L[0] === 'pear' ? 1.0 : L[0] === 'squat' ? .7 : L[0] === 'crystal' ? .95 : .86;
+  const top = L[0] === 'tall' ? 1.06 : L[0] === 'pear' ? 1.0 : L[0] === 'squat' ? .7 : L[0] === 'crystal' ? .95 : L[0] === 'cube' ? .86 : .86;
+  {   // 13.13: fierce eyes sit right on the skin, wherever the front of this shape is
+    body.updateMatrixWorld(true); const rc = new THREE.Raycaster(), eyeW = new THREE.MeshPhongMaterial({ color: '#ffffff', shininess: 80 }), eyeK = new THREE.MeshBasicMaterial({ color: '#160c08' });
+    [-1, 1].forEach(sd => { rc.set(new THREE.Vector3(sd * .34, .12, 5), new THREE.Vector3(0, 0, -1)); const h = rc.intersectObject(body)[0]; if (!h) return; const n = h.face.normal.clone().normalize(), e = new THREE.Group();
+      const o = new THREE.Mesh(GEO.sphereHi, eyeK); o.scale.set(.5, .22, .05); const w = new THREE.Mesh(GEO.sphereHi, eyeW); w.scale.set(.4, .12, .06); w.position.set(sd * -.02, -.01, .02); const br = new THREE.Mesh(GEO.box, eyeK); br.scale.set(.5, .07, .05); br.position.set(sd * .02, .14, .01); br.rotation.z = sd * -.18; e.add(o, w, br);
+      e.position.copy(h.point).addScaledVector(n, .012); e.lookAt(h.point.clone().add(n)); e.rotateZ(sd * .5); g.add(e); }); }
   const ph = (geo, c, sx, sy, sz, x, y, z, glowIt) => { const m = new THREE.Mesh(GEO[geo], glowIt ? basic(c) : new THREE.MeshPhongMaterial({ color: c, shininess: 60 })); m.scale.set(sx, sy, sz); m.position.set(x, y, z); g.add(m); return m; };
   const acc = L[3] || '', dark = col1312(base, -.45);
   if (acc === 'fuse') { ph('cylHi', '#3a3a3a', .14, .5, .14, 0, top + .2, 0); ph('sphere', '#ffd23a', .26, .26, .26, 0, top + .5, 0, true); g.userData.particles = '#ffb02a'; }
@@ -9431,7 +9437,7 @@ function makeFruit3D(f, skinC) {
   if (acc === 'tusks') [-1, 1].forEach(s => { const t = ph('coneHi', '#f4ecd8', .16, .7, .16, s * .35, -.55, .85); t.rotation.x = 2.4; t.rotation.z = s * .3; });
   if (acc === 'horns') [-1, 1].forEach(s => { const h = ph('coneHi', f.id === 'oni' || f.id === 'yeti' ? '#f4ecd8' : col1312(pat, -.1), .22, .62, .22, s * .48, top + .02, .1); h.rotation.z = s * -.55; });
   if (acc === 'ears') [-1, 1].forEach(s => { const e = ph('coneHi', base, .4, .55, .22, s * .52, top - .02, 0); e.rotation.z = s * -.45; const i2 = ph('coneHi', '#ffb8c8', .22, .34, .1, s * .52, top - .02, .08); i2.rotation.z = s * -.45; });
-  if (glow && !g.userData.particles) g.userData.particles = pat;
+  if ((glow || f.rarity === 'mythical' || f.rarity === 'omega') && !g.userData.particles) g.userData.particles = pat;
   return g;
 }
 // the old function name now builds the new fruit, wearing your skin if you have one on
@@ -9495,6 +9501,91 @@ syncChests = function () {
     const px = sx + (player.x - sx) * e2, py = sy + (player.y - sy) * e2, h = groundY(px, py) + 1.5 + Math.sin(out * Math.PI) * 3 * (1 - k) + e2 * 2.5;
     m.position.set(toS(px), h, toS(py)); m.children[0].rotation.y = time * 6; m.scale.setScalar(1 - e2 * .6); }
 };
+// ================= 13.13: equipped icons are bold stickers (thick white outline, dark ink line, shaded fill); one original emblem per fruit and fighting style =================
+// shape = [path, fill, stroke?, width?]; fill/stroke tokens: a = main colour, b = second colour, w = white, k = ink, l = light main, d = dark main, n = none
+const EMB1313 = (() => {
+  const S = (cx, cy, n, r1, r2, rot = -Math.PI / 2) => { let d = ''; for (let i = 0; i < n * 2; i++) { const a = rot + i * Math.PI / n, r = i % 2 ? r2 : r1; d += (i ? 'L' : 'M') + (cx + Math.cos(a) * r).toFixed(1) + ' ' + (cy + Math.sin(a) * r).toFixed(1); } return d + 'Z'; };
+  const C = (cx, cy, r) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${r * 2} 0a${r} ${r} 0 1 0 ${-r * 2} 0Z`, E = (cx, cy, rx, ry) => `M${cx - rx} ${cy}a${rx} ${ry} 0 1 0 ${rx * 2} 0a${rx} ${ry} 0 1 0 ${-rx * 2} 0Z`;
+  const eyes = (y, sp = 12, col = 'w') => [[`M${50 - sp - 9} ${y - 4}Q${50 - sp + 2} ${y - 2} ${50 - sp + 6} ${y + 5}Q${50 - sp - 2} ${y + 9} ${50 - sp - 9} ${y - 4}Z`, col], [`M${50 + sp + 9} ${y - 4}Q${50 + sp - 2} ${y - 2} ${50 + sp - 6} ${y + 5}Q${50 + sp + 2} ${y + 9} ${50 + sp + 9} ${y - 4}Z`, col]];
+  const head = horns => [...horns, ['M20 44C20 22 34 12 50 12S80 22 80 44L76 70Q66 90 50 92Q34 90 24 70Z', 'a'], ['M30 66Q50 58 70 66L64 82Q50 88 36 82Z', 'd'], ['M34 66L38 76L42 66M58 66L62 76L66 66', 'n', 'w', 3], ...eyes(46, 13, 'b')];
+  return {
+    flame: [['M50 6C66 26 82 40 80 62C78 82 64 94 50 94C35 94 20 82 20 62C20 46 32 38 36 22C42 32 45 38 50 42C53 30 51 18 50 6Z', 'a'], ['M50 44C61 55 66 66 62 77C58 86 43 86 39 77C35 68 41 60 50 44Z', 'b'], ['M50 62C55 68 56 74 52 78C48 80 45 76 47 71', 'n', 'w', 4]],
+    bolt: [['M60 4L22 56L46 56L36 96L80 38L55 38L68 4Z', 'a'], ['M58 12L34 50', 'n', 'w', 4]],
+    sparkle: [['M50 4C54 36 64 46 96 50C64 54 54 64 50 96C46 64 36 54 4 50C36 46 46 36 50 4Z', 'a'], ['M50 26C52 44 56 48 74 50C56 52 52 56 50 74C48 56 44 52 26 50C44 48 48 44 50 26Z', 'w'], ['M82 8C83 17 86 20 95 21C86 22 83 25 82 34C81 25 78 22 69 21C78 20 81 17 82 8Z', 'b']],
+    shards: [['M28 26L46 44L28 84L10 44Z', 'b'], ['M64 10L88 38L64 90L40 38Z', 'a'], ['M64 10L64 90M40 38H88', 'n', 'l', 3], ['M28 26V84M10 44H46', 'n', 'l', 2.5]],
+    heart: [['M50 88C20 68 8 52 8 36C8 22 20 12 32 12C40 12 46 16 50 24C54 16 60 12 68 12C80 12 92 22 92 36C92 52 80 68 50 88Z', 'a'], ['M26 26C22 30 20 36 22 42', 'n', 'w', 5], ['M80 66C72 60 74 52 80 54C86 52 88 60 80 66Z', 'b']],
+    web: [[C(50, 50, 42), 'd'], ['M50 8V92M8 50H92M20 20L80 80M80 20L20 80', 'n', 'w', 3], [S(50, 50, 8, 16, 14, 0), 'n', 'w', 3], [S(50, 50, 8, 30, 27, 0), 'n', 'w', 3], [C(50, 56, 8), 'k'], [C(50, 44, 5), 'k']],
+    rocket: [['M50 6C64 18 68 36 66 64H34C32 36 36 18 50 6Z', 'w'], ['M50 6C58 13 62 20 64 28H36C38 20 42 13 50 6Z', 'a'], [C(50, 42, 7), 'b'], ['M34 46L16 72L34 66ZM66 46L84 72L66 66Z', 'a'], ['M40 66L50 96L60 66Z', 'b']],
+    tornado: [['M10 18Q50 8 90 18Q86 28 50 30Q14 28 10 18Z', 'a'], ['M18 38Q50 30 80 38Q76 48 50 50Q22 48 18 38Z', 'a'], ['M28 58Q50 52 70 58Q66 66 50 68Q32 66 28 58Z', 'a'], ['M38 76Q50 72 60 76Q58 84 50 88Q42 84 38 76Z', 'a'], ['M20 20Q50 14 80 20M28 40Q50 34 72 40', 'n', 'w', 3]],
+    notes: [['M30 70V22L76 12V60', 'n', 'a', 8], ['M30 22L76 12V24L30 34Z', 'a'], [E(22, 72, 11, 8), 'a'], [E(68, 62, 11, 8), 'b']],
+    wings: [['M48 72C28 68 8 52 4 22C18 32 28 34 38 32C32 40 34 48 40 52C34 56 38 64 48 72Z', 'a'], ['M52 72C72 68 92 52 96 22C82 32 72 34 62 32C68 40 66 48 60 52C66 56 62 64 52 72Z', 'a'], ['M14 34Q26 44 40 46M86 34Q74 44 60 46', 'n', 'b', 4], [C(50, 70, 7), 'b']],
+    claw: [['M16 88C36 62 46 38 50 8C52 38 44 64 26 92Z', 'a'], ['M36 92C54 66 62 42 66 12C68 42 62 68 46 94Z', 'a'], ['M56 94C72 70 80 48 84 20C86 48 80 72 66 96Z', 'a'], ['M50 14L48 40M66 18L64 44', 'n', 'w', 3]],
+    fist: [['M26 40C26 30 34 26 40 30C42 22 52 22 54 30C56 22 66 22 68 32C72 26 80 30 80 40V64C80 80 68 90 52 90H42C30 90 22 80 22 68V56C22 48 26 44 26 40Z', 'a'], ['M40 30V48M54 30V48M68 32V48', 'n', 'k', 3], ['M22 58C30 52 44 54 48 62C44 68 34 68 28 66', 'b', 'k', 3]],
+    spiral: [[C(50, 50, 42), 'd'], ['M50 50C56 50 58 58 52 62C44 66 38 58 40 50C42 40 56 36 64 44C72 54 66 70 52 74C36 78 24 64 26 48C28 30 46 20 62 24', 'n', 'b', 7]],
+    ghost: [['M22 92V44C22 22 35 8 50 8S78 22 78 44V92L68 82L59 92L50 82L41 92L32 82Z', 'a'], ...eyes(42, 12, 'k'), [E(50, 64, 8, 6), 'k']],
+    moon: [['M62 8C36 12 18 32 18 56C18 78 36 94 60 94C72 94 80 90 86 82C64 82 46 66 46 44C46 28 54 16 62 8Z', 'a'], [S(76, 30, 4, 12, 4), 'b'], [S(66, 58, 4, 7, 2.5), 'w']],
+    sun: [[S(50, 50, 12, 46, 32), 'b'], [C(50, 50, 28), 'a'], ['M38 52Q50 64 62 52', 'n', 'k', 4], [C(40, 44, 3.5), 'k'], [C(60, 44, 3.5), 'k']],
+    leaf: [['M12 88C12 40 44 12 90 10C88 56 60 88 12 88Z', 'a'], ['M12 88C34 64 56 40 80 20M34 64L30 44M50 46L52 28M48 70L66 66', 'n', 'l', 4], [C(80, 80, 9), 'b']],
+    wave: [['M4 72C18 40 40 28 62 34C46 40 42 52 50 58C60 66 78 60 84 44C92 58 94 74 96 90H4Z', 'a'], ['M14 72C24 54 36 46 50 44', 'n', 'w', 4], [C(80, 22, 7), 'b']],
+    drop: [['M50 6C66 32 80 48 80 64A30 30 0 0 1 20 64C20 48 34 32 50 6Z', 'a'], ['M34 62C34 74 42 80 50 82', 'n', 'w', 5], [C(68, 26, 6), 'b']],
+    snow: [['M50 6V94M12 28L88 72M88 28L12 72', 'n', 'a', 9], ['M50 6V94M12 28L88 72M88 28L12 72', 'n', 'w', 3], ['M40 14L50 24L60 14M40 86L50 76L60 86M14 42L28 40L22 28M86 58L72 60L78 72M86 42L72 40L78 28M14 58L28 60L22 72', 'n', 'a', 6], [C(50, 50, 9), 'b']],
+    crack: [[S(50, 50, 9, 46, 30), 'a'], ['M50 50L40 20M50 50L80 34M50 50L62 84M50 50L18 62', 'n', 'k', 5], ['M50 50L40 20M50 50L80 34M50 50L62 84M50 50L18 62', 'n', 'b', 2]],
+    bomb: [[C(46, 58, 34), 'k'], ['M28 46C30 38 36 32 44 30', 'n', 'w', 5], ['M68 32Q76 18 86 16', 'n', 'd', 5], [S(88, 12, 6, 10, 4), 'b']],
+    spring: [['M30 14H70M30 86H70', 'n', 'd', 8], ['M30 22Q86 26 30 34Q86 40 30 46Q86 52 30 58Q86 64 30 70Q86 74 30 80', 'n', 'a', 8], ['M30 22Q86 26 30 34Q86 40 30 46', 'n', 'w', 2.5]],
+    cloud: [['M24 78C8 78 4 60 16 54C12 36 32 28 42 36C46 18 72 16 76 36C92 34 98 56 86 64C94 78 80 84 72 78Z', 'a'], ['M24 60C24 50 32 46 38 50', 'n', 'w', 4]],
+    storm: [['M22 58C8 58 4 42 16 36C14 20 32 14 42 22C48 6 72 6 76 24C92 22 96 42 84 48C90 58 80 62 74 58Z', 'd'], ['M52 50L36 76H50L42 96L68 64H54L62 50Z', 'b']],
+    burst: [[S(50, 50, 12, 46, 24), 'a'], [S(50, 50, 8, 24, 13), 'b'], [C(50, 50, 7), 'w']],
+    blade: [['M50 4L62 18V70H38V18Z', 'w'], ['M50 4L62 18V70H50Z', 'l'], ['M24 70H76V80H24Z', 'a'], ['M44 80H56V94H44Z', 'd']],
+    blob: [['M50 8C62 8 64 22 74 20C88 18 94 34 84 44C96 52 92 72 78 72C78 88 62 94 54 84C44 96 24 90 26 76C10 76 6 56 18 50C8 38 18 22 32 26C34 14 42 8 50 8Z', 'k'], ...eyes(50, 12, 'a')],
+    atom: [[E(50, 50, 44, 15), 'n', 'a', 5], ['M27 14Q50 30 73 86M73 14Q50 30 27 86', 'n', 'a', 5], [C(50, 50, 12), 'b']],
+    clock: [[C(50, 50, 42), 'a'], [C(50, 50, 32), 'w'], ['M50 50V26M50 50L66 60', 'n', 'k', 6], ['M50 22V26M78 50H74M50 78V74M22 50H26', 'n', 'k', 4]],
+    volcano: [['M6 92L36 38H64L94 92Z', 'd'], ['M36 38Q50 46 64 38L70 50Q58 58 54 52Q46 62 40 52L30 50Z', 'a'], ['M50 34C44 22 50 14 46 4C60 12 62 24 56 34Z', 'b']],
+    box: [['M14 32L50 16L86 32V72L50 88L14 72Z', 'a'], ['M14 32L50 48L86 32L50 16Z', 'l'], ['M14 32L50 48L86 32M50 48V88', 'n', 'k', 3], ['M32 24L68 40', 'n', 'w', 6]],
+    crane: [['M10 54L50 30L90 54L50 66Z', 'a'], ['M50 30L64 6L58 36Z', 'b'], ['M10 54L50 66L36 90Z', 'l'], ['M90 54L50 66L72 88Z', 'd']],
+    chip: [['M24 24H76V76H24Z', 'k'], ['M34 34H66V66H34Z', 'a'], ['M34 14V24M50 14V24M66 14V24M34 76V86M50 76V86M66 76V86M14 34H24M14 50H24M14 66H24M76 34H86M76 50H86M76 66H86', 'n', 'b', 5], ['M40 50H60M50 40V60', 'n', 'w', 4]],
+    target: [[C(50, 50, 44), 'a'], [C(50, 50, 30), 'w'], [C(50, 50, 16), 'a'], [C(50, 50, 6), 'w']],
+    magnet: [['M18 12H38V54Q38 66 50 66Q62 66 62 54V12H82V54Q82 88 50 88Q18 88 18 54Z', 'a'], ['M18 12H38V26H18ZM62 12H82V26H62Z', 'w']],
+    paw: [[E(50, 66, 22, 18), 'a'], [E(24, 40, 9, 12), 'a'], [E(42, 24, 9, 12), 'a'], [E(60, 24, 9, 12), 'a'], [E(78, 40, 9, 12), 'a']],
+    ring: [[C(50, 50, 42), 'a'], [C(50, 50, 18), 'k'], ['M26 30Q36 18 52 16', 'n', 'w', 5], [C(70, 70, 6), 'b']],
+    yinyang: [[C(50, 50, 44), 'k'], ['M50 6A44 44 0 0 1 50 94A22 22 0 0 1 50 50A22 22 0 0 0 50 6Z', 'a'], [C(50, 28, 6), 'k'], [C(50, 72, 6), 'a']],
+    horned: head([['M26 30L12 4L40 22Z', 'b'], ['M74 30L88 4L60 22Z', 'b']]),
+    tusked: [...head([['M26 30L16 10L38 22Z', 'l'], ['M74 30L84 10L62 22Z', 'l']]), ['M36 80Q24 94 14 86Q26 86 32 74Z', 'w'], ['M64 80Q76 94 86 86Q74 86 68 74Z', 'w']],
+    fox: [['M16 10L40 30L24 52ZM84 10L60 30L76 52Z', 'a'], ['M16 40C16 24 34 20 50 20S84 24 84 40L74 70Q62 92 50 92Q38 92 26 70Z', 'a'], ['M26 62Q50 80 74 62L64 84Q50 92 36 84Z', 'w'], ...eyes(50, 14, 'b'), [E(50, 72, 5, 4), 'k']],
+    tiger: [['M14 22C14 12 26 10 32 20L26 36ZM86 22C86 12 74 10 68 20L74 36Z', 'a'], ['M14 46C14 24 32 16 50 16S86 24 86 46L80 72Q66 94 50 94Q34 94 20 72Z', 'a'], ['M50 16V30M32 22L38 34M68 22L62 34M16 50H28M84 50H72M18 62H28M82 62H72', 'n', 'k', 5], ['M32 66Q50 84 68 66L60 86Q50 92 40 86Z', 'w'], ...eyes(48, 14, 'b'), [E(50, 70, 6, 4), 'k']],
+    pinwheel: [['M50 50C50 30 40 14 24 10C30 30 34 42 50 50Z', 'a'], ['M50 50C70 50 86 40 90 24C70 30 58 34 50 50Z', 'b'], ['M50 50C50 70 60 86 76 90C70 70 66 58 50 50Z', 'a'], ['M50 50C30 50 14 60 10 76C30 70 42 66 50 50Z', 'b'], [C(50, 50, 7), 'w']],
+    donut: [[C(50, 50, 42), 'l'], [C(50, 50, 14), 'k'], ['M14 46C20 30 36 18 54 16C74 16 88 30 86 48C80 40 70 44 64 38C58 32 46 36 40 30C34 36 22 34 14 46Z', 'a']],
+    planet: [[C(50, 50, 28), 'a'], [E(50, 54, 46, 12), 'n', 'b', 5], [S(16, 18, 4, 9, 3), 'w'], [S(84, 80, 4, 7, 2.5), 'w']],
+    feather: [['M74 8C40 18 22 46 24 86L32 90C38 56 54 32 74 8Z', 'a'], ['M74 8C66 40 52 66 32 90', 'n', 'w', 3]],
+  };
+})();
+const FRUIT_STICK1313 = { rocket: 'rocket', spin: 'pinwheel', blade: 'blade', spring: 'spring', bomb: 'bomb', smoke: 'cloud', spike: 'burst', flame: 'flame', ice: 'snow', sand: 'tornado', dark: 'blob', eagle: 'wings',
+  diamond: 'shards', light: 'sparkle', rubber: 'fist', ghost: 'ghost', magma: 'volcano', quake: 'crack', buddha: 'sun', love: 'heart', creation: 'shards', spider: 'web', sound: 'notes', phoenix: 'wings', portal: 'spiral',
+  lightning: 'bolt', pain: 'paw', blizzard: 'tornado', gravity: 'spiral', mammoth: 'tusked', trex: 'horned', dough: 'donut', shadow: 'blob', venom: 'drop', gas: 'cloud', magnet: 'magnet', singularity: 'atom', volcanic: 'volcano',
+  chrono: 'clock', kinetic: 'burst', plasma: 'atom', overgrowth: 'leaf', cyber: 'chip', void: 'spiral', storm: 'storm', vine: 'leaf', origami: 'crane', impact: 'burst', cosmic: 'planet', spirit: 'yinyang', yeti: 'tusked',
+  tiger: 'tiger', kitsune: 'fox', control: 'target', dragon: 'horned', water: 'wave', happiness: 'sun', leviathan: 'wave', oni: 'horned', celestial: 'moon', overgrown: 'leaf', cardboard: 'box', absoluteZero: 'snow' };
+const FRUIT_STICKC1313 = { phoenix: ['#3fa8ff', '#ffd23a'], dark: ['#b07aff', '#2a1446'], shadow: ['#8a5aff', '#1a0a2a'], void: ['#2a1446', '#c8a0ff'], gravity: ['#6a3aa8', '#e8d0ff'], portal: ['#3a2a7a', '#9ad8ff'],
+  dragon: ['#c83a1a', '#ffd23a'], oni: ['#c8202a', '#ffd200'], trex: ['#4a7a2a', '#ffe14a'], kitsune: ['#3a6aff', '#c8f0ff'], tiger: ['#ff8a1a', '#ffe14a'], yeti: ['#e8f4ff', '#6ac8ff'], mammoth: ['#8a5a2e', '#ffd8a0'],
+  spider: ['#3a3a3a', '#e8e8e8'], bomb: ['#3a3a3a', '#ffb02a'], sun: ['#ffd23a', '#ff9a1a'], buddha: ['#ffd23a', '#ff9a1a'], light: ['#ffe14a', '#ffffff'], lightning: ['#ffe14a', '#5a8aff'], storm: ['#5a6a8a', '#ffe14a'],
+  flame: ['#ff6a1f', '#ffe14a'], magma: ['#ff5a1a', '#ffb02a'], volcanic: ['#ff5a1a', '#ffb02a'], ice: ['#7ad8ff', '#ffffff'], absoluteZero: ['#bfeaff', '#2a8aff'], blizzard: ['#bfeaff', '#ffffff'], cosmic: ['#6a3aa8', '#ff8af0'], spirit: ['#f4f4f4', '#1a1a2a'] };
+const shade1313 = (c, k) => col1312(c, k);
+function sticker1313(emb, a, b) {
+  const shapes = EMB1313[emb] || EMB1313.burst, id = 'st' + emb + a.slice(1) + b.slice(1), T = { a: `url(#${id}a)`, b: `url(#${id}b)`, w: '#ffffff', k: '#141821', l: shade1313(a, .45), d: shade1313(a, -.45), n: 'none' };
+  const fillOf = t => T[t] || t, ink = '#141821';
+  const grad = (n, c) => `<linearGradient id="${id}${n}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade1313(c, .4)}"/><stop offset=".55" stop-color="${c}"/><stop offset="1" stop-color="${shade1313(c, -.35)}"/></linearGradient>`;
+  const draw = (mode) => shapes.map(([d, f, s, w]) => { const stroked = f === 'n';
+    if (mode === 'white') return `<path d="${d}" fill="${stroked ? 'none' : '#fff'}" stroke="#fff" stroke-width="${(stroked ? (w || 4) : 0) + 13}" stroke-linejoin="round" stroke-linecap="round"/>`;
+    if (mode === 'ink') return `<path d="${d}" fill="${stroked ? 'none' : ink}" stroke="${ink}" stroke-width="${(stroked ? (w || 4) : 0) + 5}" stroke-linejoin="round" stroke-linecap="round"/>`;
+    return `<path d="${d}" fill="${stroked ? 'none' : fillOf(f)}"${stroked ? ` stroke="${fillOf(s)}" stroke-width="${w || 4}" stroke-linecap="round" stroke-linejoin="round"` : ''}/>`; }).join('');
+  return `<svg viewBox="-10 -10 120 120" aria-hidden="true" class="stick-ic"><defs>${grad('a', a)}${grad('b', b)}</defs><g transform="translate(2.5 3.5)" opacity=".35">${draw('ink')}</g>${draw('white')}${draw('ink')}${draw('fill')}</svg>`;
+}
+function fruitSticker1313(f) { const sk = skinOf(f.id), base = (sk && sk.c) || f.color, C = !sk && FRUIT_STICKC1313[f.id]; return sticker1313(FRUIT_STICK1313[f.id] || 'burst', C ? C[0] : base, C ? C[1] : shade1313(base, .55)); }
+function styleSticker1313(id) {
+  const it = ITEMS[id] || {}, n = (it.name || id).toLowerCase(), c = it.color || it.c || '#ffb02a';
+  const pick = [[/dragon/, 'horned', '#c83a1a', '#ffd23a'], [/electric claw|claw|talon/, 'claw', '#5ab4ff', '#ffffff'], [/electric/, 'bolt', '#ffe14a', '#5a8aff'], [/water|shark|tide|fish/, 'wave', '#2a8aff', '#c8f0ff'],
+    [/death|ghoul|reaper/, 'blob', '#6a3aa8', '#d8b8ff'], [/dark step|black leg|kick|leg/, 'flame', '#ff6a1f', '#ffe14a'], [/sanguine|blood|vampire/, 'drop', '#c8102a', '#ff8a9a'], [/godhuman|god/, 'sparkle', '#ffe14a', '#ff5a9a'],
+    [/superhuman/, 'fist', '#ffd23a', '#ff9a1a'], [/thunder/, 'bolt', '#ffe14a', '#8a5aff'], [/tempest|storm/, 'storm', '#5a6a8a', '#ffe14a'], [/gale|agile|air/, 'tornado', '#c8f0ff', '#ffffff'], [/void/, 'spiral', '#2a1446', '#c8a0ff'], [/starfall|star/, 'sparkle', '#ffd23a', '#ffffff'], [/destruction/, 'burst', '#c8202a', '#ffb02a'], [/inferno|ember/, 'flame', '#ff4a1a', '#ffe14a'], [/guard|shield/, 'crack', '#8a6a4a', '#ffd8a0'], [/ice|frost/, 'snow', '#7ad8ff', '#ffffff'], [/stone|earth|rock/, 'crack', '#8a6a4a', '#ffd8a0']].find(r => r[0].test(n));
+  return pick ? sticker1313(pick[1], pick[2], pick[3]) : sticker1313('fist', c, shade1313(c, .5));
+}
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -10452,7 +10543,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.12.1';
+const APP_VERSION = '13.13.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
