@@ -9921,6 +9921,67 @@ function anim1319() {
 }
 const _pose68_1319 = pose68;
 pose68 = function () { _pose68_1319(); try { anim1319(); } catch (e) {} };
+// ================= 13.20: move effects. Sword slash arcs, punch shock rings, muzzle flashes and tracers, impact stars, cast circles, projectile trails =================
+const VFX1320 = []; let vfxT1320 = 0;
+const VTEX1320 = hasGL ? (() => {
+  const mk = (w, h, draw) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h); const t = new THREE.CanvasTexture(cv); return t; };
+  return {
+    slash: mk(128, 64, (x, w, h) => { const d = x.createImageData(w, h); for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const u = i / (w - 1), v = 1 - j / (h - 1), a = Math.pow(v, 1.3) * Math.pow(Math.sin(u * Math.PI), .6), k = (j * w + i) * 4, wht = Math.pow(v, 8);
+      d.data[k] = 255; d.data[k + 1] = 255; d.data[k + 2] = 255; d.data[k + 3] = 255 * Math.min(1, a + wht * .3); } x.putImageData(d, 0, 0); }),
+    star: mk(128, 128, (x) => { const g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.25, 'rgba(255,255,255,.6)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g;
+      x.beginPath(); for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, r = i % 2 ? 14 : (i % 4 ? 46 : 64); x.lineTo(64 + Math.cos(a) * r, 64 + Math.sin(a) * r); } x.fill(); }),
+    rune: mk(256, 256, (x) => { x.strokeStyle = '#fff'; x.lineWidth = 6; x.beginPath(); x.arc(128, 128, 118, 0, Math.PI * 2); x.stroke(); x.lineWidth = 3; x.beginPath(); x.arc(128, 128, 96, 0, Math.PI * 2); x.stroke();
+      for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; x.beginPath(); x.moveTo(128 + Math.cos(a) * 98, 128 + Math.sin(a) * 98); x.lineTo(128 + Math.cos(a) * (i % 2 ? 108 : 116), 128 + Math.sin(a) * (i % 2 ? 108 : 116)); x.stroke(); }
+      x.beginPath(); for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 - Math.PI / 2; x.lineTo(128 + Math.cos(a) * 92, 128 + Math.sin(a) * 92); } x.closePath(); x.stroke(); x.beginPath(); for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + Math.PI / 2; x.lineTo(128 + Math.cos(a) * 92, 128 + Math.sin(a) * 92); } x.closePath(); x.stroke(); }),
+  };
+})() : null;
+// a tapered crescent ribbon: u runs along the arc, v from inner (clear) to outer (bright edge)
+function ribbon1320(r0, r1, arc, n = 28) { const pos = [], uv = [], idx = []; for (let i = 0; i <= n; i++) { const u = i / n, a = -arc / 2 + u * arc, w = Math.sin(u * Math.PI); const ri = r1 - (r1 - r0) * w;
+    pos.push(Math.sin(a) * ri, 0, Math.cos(a) * ri, Math.sin(a) * r1, 0, Math.cos(a) * r1); uv.push(u, 0, u, 1); if (i < n) { const k = i * 2; idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); } }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); return g; }
+const RIB1320 = hasGL ? { s: ribbon1320(1.8, 5.2, 2.6), b: ribbon1320(2.4, 7, 3.2) } : {};
+const addMat1320 = (c, map, o = 1) => new THREE.MeshBasicMaterial({ color: c, map, transparent: true, opacity: o, depthWrite: false, side: THREE.DoubleSide });
+function vfx1320(o) { if (VFX1320.length < 90) VFX1320.push(Object.assign({ t: 0 }, o)); }
+const hY1320 = (x, y, z) => (z ?? groundY(x, y)) + 3;
+// M1: sword arcs, punches, muzzle flashes
+const _m1Inner1320 = doM1Inner;
+doM1Inner = function (tool) { const before = player.m1Cd; _m1Inner1320(tool); if (!tool || player.m1Cd === before) return; const m = m1For(tool); if (!m) return;
+  const f = player.facing, a = Math.atan2(f.x, f.y), c = (player.buff && tool.kind === 'fruit') ? '#fff7c2' : tool.color || '#ffffff', big = player.swing && player.swing.big;
+  if (m.ranged) { vfx1320({ k: 'flash', x: player.x + f.x * 26, y: player.y + f.y * 26, z: player.z + 3.4, c: tool.kind === 'gun' ? '#ffe08a' : c, life: .1, s: tool.kind === 'gun' ? 2.2 : 1.6 }); return; }
+  if (tool.kind === 'sword') { vfx1320({ k: 'slash', x: player.x, y: player.y, z: player.z + 3.4 + (big ? .3 : 0), a, side: player.swingSide || 1, c: col1315(c, .55), big, life: big ? .3 : .2 }); if (big) vfx1320({ k: 'slash', x: player.x, y: player.y, z: player.z + 3.4, a: a + .3, side: -(player.swingSide || 1), c: '#ffffff', big, life: .3, delay: .06 }); }
+  else { const hx = player.x + f.x * (m.range || 40), hy = player.y + f.y * (m.range || 40); vfx1320({ k: 'ring', x: hx, y: hy, z: player.z + 3, c, life: .22, s: big ? 3.2 : 1.8, up: true, a });
+    for (let i = 0; i < 4; i++) { const s = rand(-10, 10); fx.lines.push({ x1: player.x + f.y * s, y1: player.y - f.x * s, x2: hx + f.y * s, y2: hy - f.x * s, z: player.z + rand(2.5, 4), t: 0, life: .14 }); }
+    if (big) { vfx1320({ k: 'ring', x: hx, y: hy, z: player.z + .15, c: '#ffffff', life: .4, s: 5 }); sparkBurst(hx, hy, 2, 14, '#d8c8a8', 160, .5); } } };
+// hits: an impact star in the weapon's colour
+const _hitEnemy1320 = hitEnemy;
+hitEnemy = function (e, dmg, fromX, fromY, knock, stun) { const hp = e.hp; _hitEnemy1320(e, dmg, fromX, fromY, knock, stun); if (e.hp === hp) return; const T = currentTool(), crit = hp - e.hp > dmg * 1.3;
+  vfx1320({ k: 'star', x: e.x + rand(-6, 6), y: e.y + rand(-6, 6), z: hY1320(e.x, e.y, e.z) + (e.size || 10) * .12, c: crit ? '#ffd23a' : (T && T.color) || '#ffffff', life: crit ? .26 : .18, s: crit ? 4.5 : 3, r: rand(0, TAU) }); };
+// moves: a spinning cast circle under you, a column of particles and an arm thrust
+const _useSkill1320 = useSkillInner;
+useSkillInner = function (tool, key) { const id = tool ? tool.id + key : '', cd = cooldowns[id] || 0; _useSkill1320(tool, key); if (!tool || (cooldowns[id] || 0) <= cd) return;
+  const c = tool.color || '#ffffff'; vfx1320({ k: 'rune', x: player.x, y: player.y, z: player.z + .12, c, life: .7, s: 5.5 }); vfx1320({ k: 'ring', x: player.x, y: player.y, z: player.z + .2, c, life: .45, s: 6 });
+  for (let i = 0; i < 16; i++) { const a = rand(0, TAU), r = rand(10, 40); fx.sparks.push({ x: player.x + Math.cos(a) * r, y: player.y + Math.sin(a) * r, z: rand(0, 6), vx: 0, vy: 0, vz: rand(60, 140), t: 0, life: rand(.4, .7), color: i % 3 ? c : '#ffffff' }); }
+  if (!(player.attackAnim > 0)) { player.attackAnim = player.attackDur = .22; } };
+const _toggleBuso1320 = toggleBuso;
+toggleBuso = function () { const was = player.buso; _toggleBuso1320(); if (player.buso && !was) vfx1320({ k: 'ring', x: player.x, y: player.y, z: player.z + 2, c: typeof auraColor === 'function' ? auraColor() : '#8a5aff', life: .45, s: 6, up: true }); };
+function vfxTick1320() {
+  const dt = Math.min(.1, Math.max(0, time - vfxT1320)); vfxT1320 = time;
+  for (const p of projectiles) if (p.owner === 'player' && Math.random() < .7) fx.sparks.push({ x: p.x + rand(-3, 3), y: p.y + rand(-3, 3), z: (p.h ?? 0) * 0 + rand(18, 30), vx: -p.vx * .05, vy: -p.vy * .05, vz: rand(-5, 5), t: 0, life: .28, color: p.color || '#ffffff' });   // trails
+  for (let i = VFX1320.length - 1; i >= 0; i--) { const v = VFX1320[i]; if (v.delay > 0) { v.delay -= dt; continue; } v.t += dt; const k = v.t / v.life; if (k >= 1) { VFX1320.splice(i, 1); continue; }
+    const m = fxMesh(v, () => {
+      if (v.k === 'slash') return new THREE.Mesh(v.big ? RIB1320.b : RIB1320.s, addMat1320(v.c, VTEX1320.slash));
+      if (v.k === 'star' || v.k === 'flash') return new THREE.Sprite(new THREE.SpriteMaterial({ map: VTEX1320.star, color: v.c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+      if (v.k === 'rune') return new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), addMat1320(v.c, VTEX1320.rune));
+      return new THREE.Mesh(GEO.ring, addMat1320(v.c, null, .9)); });
+    const X = toS(v.x), Z = toS(v.y);
+    if (v.k === 'slash') { m.position.set(X, v.z, Z); m.rotation.set(0, v.a, v.side * .5); m.rotateY(v.side * (k - .5) * 1.6); m.scale.setScalar(1 + k * .25); m.material.opacity = 1 - k * k; }
+    else if (v.k === 'star' || v.k === 'flash') { m.position.set(X, v.z, Z); const s = v.s * (k < .3 ? k / .3 : 1 - (k - .3) * .6); m.scale.set(s, s, 1); m.material.rotation = (v.r || 0) + k; m.material.opacity = 1 - k; }
+    else if (v.k === 'rune') { m.position.set(X, v.z, Z); m.rotation.y = k * 2; const s = v.s * (k < .2 ? k / .2 : 1); m.scale.set(s, 1, s); m.material.opacity = k < .7 ? 1 : 1 - (k - .7) / .3; }
+    else { m.position.set(X, v.z, Z); if (v.up) { m.rotation.set(0, v.a || 0, 0); m.rotateX(Math.PI / 2); } const s = .5 + v.s * k; m.scale.setScalar(s); m.material.opacity = .9 * (1 - k); }
+  }
+}
+const _syncChests1320 = syncChests;
+syncChests = function () { _syncChests1320(); try { vfxTick1320(); } catch (e) {} };
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -10878,7 +10939,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.19.0';
+const APP_VERSION = '13.20.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
