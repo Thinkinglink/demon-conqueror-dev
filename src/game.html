@@ -4835,7 +4835,7 @@ function syncWorld(dt) {
   if (player.knee > time) { const k = (player.knee - time) / .3; playerModel.P.legL.rotation.x = playerModel.P.legR.rotation.x = -1.3 * Math.sin(k * Math.PI); }   // Geppo: knees snap up
   if (player.dash) { playerModel.root.scale.z *= 1.45; playerModel.root.scale.x *= .82; if (Math.random() < .8) fx.sparks.push({ x: player.x + rand(-8, 8), y: player.y + rand(-8, 8), z: player.z + rand(2, 7), vx: 0, vy: 0, vz: 0, t: 0, life: .35, color: '#6af0ff' }); }   // stretched along the dash + neon trail
   { const ak = player.attackAnim > 0 ? player.attackAnim / (player.attackDur || .25) : 0, sl = fxMesh(SLASH, () => new THREE.Mesh(SLASH_GEO, glowMat(0xffffff, .7)));
-    playerModel.body.rotation.x = .38 * Math.sin(ak * Math.PI);                       // lunge: lean into every swing
+    if (ak > 0) playerModel.body.rotation.x = .38 * Math.sin(ak * Math.PI);           // lunge: lean into every swing
     sl.visible = ak > 0 && !player.transform; if (sl.visible) { const T = currentTool(), f = Math.atan2(player.facing.x, player.facing.y); sl.material.color.set(T && T.kind === 'sword' ? '#bfe8ff' : T && T.color || '#ffd9a0');
       sl.position.set(toS(pX) + Math.sin(f) * 1.6, pBase + 3.2, toS(pY) + Math.cos(f) * 1.6); sl.rotation.set(Math.PI / 2, 0, -f + (player.swingSide || 1) * (1 - ak) * 2 - 1.5); sl.scale.setScalar(2.4); sl.material.opacity = .75 * ak; } }   // crescent wind trail
   if (syncFormModel(pX, pY, pBase, scaleMul)) playerModel.root.visible = false;    // Buddha statue, West wyvern, East serpent
@@ -9875,6 +9875,52 @@ const STYLE_STICK1318 = { combat: ['fist', '#ffd27a', '#ff9a3a'], darkStep: ['bo
   dragonTalon: ['talon', '#c83a1a', '#ffe8c0'], godhuman: ['godFist', '#ffe8c0', '#ffd23a'], sanguineArt: ['bloodFang', '#c8102a', '#ff8a9a'], agileAir: ['windSwirl', '#c8f0ff', '#7ad8ff'], emberFist: ['emberFist', '#ff6a1f', '#ffd27a'],
   galePalm: ['fan', '#9affd8', '#2a8a6a'], stoneGuard: ['shield', '#8a7a6a', '#c8b8a0'], infernoKnuckle: ['knuckles', '#c8a020', '#ff4a1a'], tempestPalm: ['cyclone', '#6a8aff', '#ffe14a'], destruction: ['meteor', '#c8202a', '#ffb02a'],
   voidFist: ['voidFist', '#8a5aff', '#c8a0ff'], starfallArt: ['shootingStar', '#ffd23a', '#ffffff'], thunderMonk: ['beads', '#8a5a2e', '#ffe14a'] };
+// ================= 13.19: player animations. Jump and fall poses, air jump flip, landing squash, dash lean, flash step blink, instinct and aura toggles, idle actions =================
+const A1319 = { ground: true, landT: -9, idle: 0, act: -1, actT: 0, flashT: -9, busoT: -9, buso: false, ken: false, kenT: -9, kenPulse: 0, airT: -9 };
+const _flashStep1319 = flashStep;
+flashStep = function () { const x0 = player.x, y0 = player.y, cd = player.flashCd; _flashStep1319(); if (player.flashCd > cd || (player.x !== x0 || player.y !== y0)) { A1319.flashT = time; A1319.fx0 = x0; A1319.fy0 = y0;
+  fx.rings.push({ x: x0, y: y0, z: player.z, t: 0 }); fx.rings.push({ x: player.x, y: player.y, z: player.z, t: -.05 }); sparkBurst(x0, y0, 8, 14, '#ffffff', 120, .35); } };
+const _doDash1319 = doDash;
+doDash = function () { const had = !!player.dash; _doDash1319(); if (!had && player.dash) { A1319.dashT = time; if (player.grounded) sparkBurst(player.x, player.y, 2, 12, '#d8c8a8', 110, .45); } };
+function anim1319() {
+  const ch = playerModel; if (!ch || player.transform || player.roll || player.dead || (player.dm && player.dm.mon)) return; const P = ch.P, A = A1319, B = ch.body;
+  const speed = Math.hypot(player.vx, player.vy), busy = player.attackAnim > 0 || player.dash;
+  // landing: squash and a puff of dust
+  if (player.grounded && !A.ground && time - A.airT > .25) { A.landT = time; sparkBurst(player.x, player.y, 2, 10, '#d8c8a8', 90, .4); }
+  if (!player.grounded && A.ground) A.airT = time; A.ground = player.grounded;
+  const lk = (time - A.landT) / .22; if (lk < 1) { const q = Math.sin(lk * Math.PI); ch.root.scale.y *= 1 - q * .18; ch.root.scale.x *= 1 + q * .1; ch.root.scale.z *= 1 + q * .1; P.legL.rotation.x = P.legR.rotation.x = -q * .5; P.armL.rotation.z = -q * .5; P.armR.rotation.z = q * .5; }
+  // in the air: rising = arms up, falling = arms spread, legs apart; air jump = a full forward flip
+  if (!player.grounded && !player.flight && !busy) {
+    if (player.knee > time) { const k = 1 - (player.knee - time) / .3; B.rotation.x = k * TAU; P.legL.rotation.x = P.legR.rotation.x = -1.4 * Math.sin(k * Math.PI); P.armL.rotation.x = P.armR.rotation.x = -1.2; }
+    else if (player.vz > 0) { P.armL.rotation.x = P.armR.rotation.x = -2.8; P.armL.rotation.z = -.15; P.armR.rotation.z = .15; P.legL.rotation.x = -.5; P.legR.rotation.x = .2; }
+    else { P.armL.rotation.x = P.armR.rotation.x = -.3; P.armL.rotation.z = -1.2; P.armR.rotation.z = 1.2; P.legL.rotation.x = .25; P.legR.rotation.x = -.25; P.legL.rotation.z = -.15; P.legR.rotation.z = .15; }
+  }
+  // dash: lean hard into it, arms swept back, one leg forward; wind streaks
+  if (player.dash) { B.rotation.x = .55; P.armL.rotation.x = P.armR.rotation.x = 1.1; P.armL.rotation.z = -.25; P.armR.rotation.z = .25; P.legL.rotation.x = -.7; P.legR.rotation.x = .6;
+    if (Math.random() < .6) { const a = Math.atan2(player.vy, player.vx) + Math.PI, s = rand(-14, 14); fx.lines.push({ x1: player.x + Math.cos(a + Math.PI / 2) * s, y1: player.y + Math.sin(a + Math.PI / 2) * s, x2: player.x + Math.cos(a) * 60 + Math.cos(a + Math.PI / 2) * s, y2: player.y + Math.sin(a) * 60 + Math.sin(a + Math.PI / 2) * s, z: player.z + rand(2, 6), t: 0, life: .22 }); } }
+  // flash step: vanish and reappear crouched, popping back to full size
+  const fk = (time - A.flashT) / .28; if (fk < 1) { const e = Math.min(1, fk * 1.6); ch.root.scale.multiplyScalar(.55 + .45 * e); B.rotation.x = .4 * (1 - fk); P.legL.rotation.x = P.legR.rotation.x = -.8 * (1 - fk); P.armL.rotation.z = -1 * (1 - fk); P.armR.rotation.z = 1 * (1 - fk); }
+  // aura on: a flex with a shockwave; aura off: shake it off
+  if (player.buso !== A.buso) { A.buso = player.buso; A.busoT = time; if (player.buso) { fx.rings.push({ x: player.x, y: player.y, z: player.z, t: 0 }); fx.rings.push({ x: player.x, y: player.y, z: player.z, t: -.12 }); sparkBurst(player.x, player.y, 2, 16, '#d8c8a8', 160, .5); }
+    else for (let i = 0; i < 18; i++) fx.sparks.push({ x: player.x + rand(-14, 14), y: player.y + rand(-14, 14), z: rand(10, 40), vx: rand(-40, 40), vy: rand(-40, 40), vz: rand(-60, -10), t: 0, life: .6, color: typeof auraColor === 'function' ? auraColor() : '#8a5aff' }); }
+  const bk = (time - A.busoT) / .55; if (bk < 1 && !busy && player.grounded) { const q = Math.sin(Math.min(1, bk * 2) * Math.PI / 2) * (1 - Math.max(0, bk - .7) / .3);
+    if (player.buso) { P.armL.rotation.x = P.armR.rotation.x = -1.6 * q; P.armL.rotation.z = -1.1 * q; P.armR.rotation.z = 1.1 * q; P.legL.rotation.z = -.2 * q; P.legR.rotation.z = .2 * q; ch.root.scale.y *= 1 - .06 * q; }
+    else { const w = Math.sin(bk * 30) * q; P.armL.rotation.z = -.5 * w; P.armR.rotation.z = .5 * w; B.rotation.y += w * .15; } }
+  // instinct: on = ripples spread out, then a slow sensing pulse while it stays on; off = one ring
+  const kOn = !!(player.ken && player.ken.on); if (kOn !== A.ken) { A.ken = kOn; A.kenT = time; if (kOn) for (let i = 0; i < 3; i++) fx.rings.push({ x: player.x, y: player.y, z: player.z, t: -i * .12 }); else fx.rings.push({ x: player.x, y: player.y, z: player.z, t: 0 }); }
+  if (kOn && time > A.kenPulse) { A.kenPulse = time + 2.2; fx.rings.push({ x: player.x, y: player.y, z: player.z, t: 0 }); }
+  const kk = (time - A.kenT) / .45; if (kOn && kk < 1 && !busy) { const q = Math.sin(kk * Math.PI); P.head.rotation.y = Math.sin(kk * TAU) * .6 * q; P.armR.rotation.x = -1.4 * q; P.armR.rotation.z = .3 * q; }
+  // idle: after a few seconds standing still, stretch, look around or roll the shoulders
+  const recent = time - Math.max(A.busoT, A.kenT, A.flashT, A.landT) < .8;
+  if (speed < 5 && player.grounded && !busy && !player.flight && !recent) A.idle += 1 / 60; else { A.idle = 0; A.act = -1; }
+  if (A.act < 0 && A.idle > 4) { A.act = Math.random() * 3 | 0; A.actT = time; }
+  if (A.act >= 0) { const k = (time - A.actT) / 1.8; if (k > 1) { A.act = -1; A.idle = 1; } else { const q = Math.sin(k * Math.PI);
+    if (A.act === 0) { P.armL.rotation.x = P.armR.rotation.x = -2.9 * q; P.armL.rotation.z = -.25 * q; P.armR.rotation.z = .25 * q; ch.root.scale.y *= 1 + .04 * q; }
+    else if (A.act === 1) { P.head.rotation.y = Math.sin(k * TAU) * .8; B.rotation.y += Math.sin(k * TAU) * .15; }
+    else { P.armL.rotation.x = Math.sin(k * TAU * 2) * .5 * q; P.armR.rotation.x = -Math.sin(k * TAU * 2) * .5 * q; P.head.rotation.z = Math.sin(k * TAU) * .15; } } }
+}
+const _pose68_1319 = pose68;
+pose68 = function () { _pose68_1319(); try { anim1319(); } catch (e) {} };
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -10832,7 +10878,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.18.0';
+const APP_VERSION = '13.19.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
