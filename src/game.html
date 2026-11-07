@@ -9396,10 +9396,21 @@ const BN80a = ['Captain', 'Salty', 'Lucky', 'Shadow', 'Neon', 'Storm', 'Coral', 
 const BOT80_TALK = ['anyone want to grind with me?', 'just got a new sword!', 'this boss is tough', 'who has a mythical fruit?', 'leveling up so fast', 'brb going to the next island', 'gg everyone', 'the sea beasts are out', 'looking for a crew', 'need fragments...', 'that drop was lucky', 'trade anyone?'];
 const BOT80_REPLY = ['sure {n}, lets go!', 'nice one {n}', 'same {n} lol', 'gg {n}', 'meet me at the docks {n}', 'haha {n}', 'I can help {n}', 'no way {n}!'];
 const BOTS80 = []; let bot80sea = 0, bot80T = 4;
-function botLook80() { const L = LOOKS.player.slice(); const pick = a => a[Math.random() * a.length | 0]; L[0] = pick(['#c0392b', '#2a6aff', '#3fbf6a', '#ffd166', '#b46cff', '#ff8a2a', '#1a1a2a', '#e8e8f0']); L[1] = pick(['#2a2a3a', '#3a2a1a', '#1a3a5a', '#4a4a4a']); L[2] = pick(['#f2c79a', '#e0a878', '#c08a5a', '#8a5a3a', '#ffe0c8']); return L; }
+function botLook80(i = 0) {   // 13.18: every bot gets its own outfit, hat, pattern, hair, face and race, never repeated within a server
+  const pick = a => a[Math.random() * a.length | 0], ids = Object.keys(SKINS), skin = ids[((i / 3 | 0) + (bot80seed ||= 1 + Math.random() * 8 | 0)) % ids.length], sk = SKINS[skin], L = LOOKS.player.slice();
+  const shirts = ['#c0392b', '#2a6aff', '#3fbf6a', '#ffd166', '#b46cff', '#ff8a2a', '#1a1a2a', '#e8e8f0', '#ff5a9a', '#2ad8c8', '#8a5a2e', '#5a6a8a', '#c8a020', '#6a1a2a', '#3a8a5a'];
+  const hats = ['none', 'none', 'bandana', 'cap', 'beanie', 'tricorn', 'straw', 'tophat', 'hood', 'helm', 'turban', 'horns', 'chef', 'mask'];
+  if (i % 3 === 0) { [L[0], L[1], L[3], L[4]] = sk.look; } else { L[0] = shirts[(i * 7 + (bot80seed || 0)) % shirts.length]; L[1] = pick(['#2a2a3a', '#3a2a1a', '#1a3a5a', '#4a4a4a', '#e8e8f0', '#5a3a6a', '#2a4a2a']); L[3] = hats[(i * 5 + 3) % hats.length]; L[4] = pick(['#1a1a1a', '#c0392b', '#f4f4f4', '#2a6aff', '#e8c25a', '#3a2a6a']); }
+  L[2] = pick(['#f2c79a', '#e0a878', '#c08a5a', '#8a5a3a', '#ffe0c8', '#6a4028']);
+  const races = ['human', 'human', 'human', 'mink', 'fishman', 'skypiea', 'ghoul', 'cyborg'], race = races[(i * 3 + 1) % races.length];
+  const opts = { pattern: i % 3 === 0 ? SKIN_PAT1315[skin] : PAT1315[(i * 3) % PAT1315.length], rim: SKIN_RIM1315[skin], face: i % FACES1314, hairStyle: (i * 7) % 4,
+    hair: ['#2a1a10', '#5a3a1a', '#141414', '#c8a060', '#8a2a1a', '#e8e0d8', '#3a2a6a', '#2a6aff', '#ff5a9a', '#3fbf6a'][(i * 3) % 10], cape: i % 5 === 2 ? pick(['#6a1a2a', '#1a1a2a', '#2a3a8a', '#c8a020']) : null };
+  return { L, opts, skin: i % 3 === 0 ? skin : null, race };
+}
+let bot80seed = 0;
 function spawnBots80() { BOTS80.forEach(b => scene.remove(b.ch.root)); BOTS80.length = 0; bot80sea = World.seaId; const used = new Set();
   for (let i = 0; i < 15; i++) { let n; do n = BN80a[Math.random() * BN80a.length | 0] + BN80b[Math.random() * BN80b.length | 0] + (Math.random() < .5 ? (Math.random() * 99 | 0) : ''); while (used.has(n)); used.add(n);
-    const ch = makeChar(botLook80()); scene.add(ch.root); const a = Math.random() * TAU, r = 200 + Math.random() * 600; BOTS80.push({ name: n, ch, x: player.x + Math.cos(a) * r, y: player.y + Math.sin(a) * r, z: player.z, lv: Math.max(1, Math.round(GameData.state.level * (.5 + Math.random()))), tgt: null, wait: Math.random() * 3, say: '', sayT: 0, ph: Math.random() * 6, hit: 0 }); } }
+    const bl = botLook80(i); raceLook(bl.L, bl.race, true); const ch = makeChar(bl.L, bl.opts); try { dressPlayer(ch, bl.skin, bl.race); } catch (_) {} scene.add(ch.root); const a = Math.random() * TAU, r = 200 + Math.random() * 600; BOTS80.push({ name: n, ch, x: player.x + Math.cos(a) * r, y: player.y + Math.sin(a) * r, z: player.z, lv: Math.max(1, Math.round(GameData.state.level * (.5 + Math.random()))), tgt: null, wait: Math.random() * 3, say: '', sayT: 0, ph: Math.random() * 6, hit: 0 }); } }
 function botSay80(b, t) { b.say = t; b.sayT = time + 10; chatAdd(b.name + ' [bot]', t); }
 function tickBots80(dt) { if (!hasGL || !World.enemies) return; if (bot80sea !== World.seaId || !BOTS80.length) spawnBots80();
   for (const b of BOTS80) { if (b.wait > 0) b.wait -= dt;
@@ -9505,13 +9516,10 @@ function makeFruit3D(f, skinC) {
   const mat = FRUITMAT1312[key] ||= new THREE.MeshPhysicalMaterial({ map: skinTex1312(f.id, base, pat, L[1]), roughness: A.metal ? .3 : A.rough ?? .38, metalness: Math.min(.3, A.metal || 0), clearcoat: .6, clearcoatRoughness: .25,
     flatShading: L[0] === 'crystal', transparent: f.id === 'ghost', opacity: f.id === 'ghost' ? .82 : 1,
     ...(glow ? { emissive: new THREE.Color('#ffffff'), emissiveMap: skinTex1312(f.id, base, pat, L[1], true), emissiveIntensity: .75 } : {}) });
+  if (!mat.bumpMap) { mat.bumpMap = mat.map; mat.bumpScale = .035; mat.needsUpdate = true; }   // 13.18: the pattern stands out in relief
   const body = new THREE.Mesh(body1312(L[0]), mat); body.castShadow = true; g.add(body);
   const top = L[0] === 'tall' ? 1.06 : L[0] === 'pear' ? 1.0 : L[0] === 'squat' ? .7 : L[0] === 'crystal' ? .95 : L[0] === 'cube' ? .86 : .86;
-  {   // 13.13: fierce eyes sit right on the skin, wherever the front of this shape is
-    body.updateMatrixWorld(true); const rc = new THREE.Raycaster(), eyeW = new THREE.MeshPhongMaterial({ color: '#ffffff', shininess: 80 }), eyeK = new THREE.MeshBasicMaterial({ color: '#160c08' });
-    [-1, 1].forEach(sd => { rc.set(new THREE.Vector3(sd * .34, .12, 5), new THREE.Vector3(0, 0, -1)); const h = rc.intersectObject(body)[0]; if (!h) return; const n = h.face.normal.clone().normalize(), e = new THREE.Group();
-      const o = new THREE.Mesh(GEO.sphereHi, eyeK); o.scale.set(.5, .22, .05); const w = new THREE.Mesh(GEO.sphereHi, eyeW); w.scale.set(.4, .12, .06); w.position.set(sd * -.02, -.01, .02); const br = new THREE.Mesh(GEO.box, eyeK); br.scale.set(.5, .07, .05); br.position.set(sd * .02, .14, .01); br.rotation.z = sd * -.18; e.add(o, w, br);
-      e.position.copy(h.point).addScaledVector(n, .012); e.lookAt(h.point.clone().add(n)); e.rotateZ(sd * .5); g.add(e); }); }
+  face1318(g, body, f, base);   // 13.18: each fruit's own eyes and mouth
   const ph = (geo, c, sx, sy, sz, x, y, z, glowIt) => { const m = new THREE.Mesh(GEO[geo], glowIt ? basic(c) : new THREE.MeshPhongMaterial({ color: c, shininess: 60 })); m.scale.set(sx, sy, sz); m.position.set(x, y, z); g.add(m); return m; };
   const acc = L[3] || '', dark = col1312(base, -.45);
   if (acc === 'fuse') { ph('cylHi', '#3a3a3a', .14, .5, .14, 0, top + .2, 0); ph('sphere', '#ffd23a', .26, .26, .26, 0, top + .5, 0, true); g.userData.particles = '#ffb02a'; }
@@ -9548,7 +9556,6 @@ function fruitIconURL3D(f, skinC) {
     m.updateMatrixWorld(true); const box = new THREE.Box3().setFromObject(m.children[0]), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3()); c.y += .22; fiC.position.set(c.x, c.y + .1, c.z + Math.max(s.x, s.y + .7) * 2.3); fiC.lookAt(c);
     m.traverse(o => { if (o.isSprite) o.visible = false; }); fiR.render(fiS, fiC); fiS.remove(m);
     const au = typeof SIG1316 !== 'undefined' && (SIG1316[f.id] || []).find(q => q[0] === 'aura'), out = document.createElement('canvas'); out.width = out.height = 192; const ox = out.getContext('2d');
-    if (au) { const gr = ox.createRadialGradient(96, 100, 10, 96, 100, 96); gr.addColorStop(0, au[1] + 'cc'); gr.addColorStop(.5, au[1] + '55'); gr.addColorStop(1, au[1] + '00'); ox.fillStyle = gr; ox.fillRect(0, 0, 192, 192); }   // 13.16: the aura glows behind the fruit
     ox.drawImage(fiR.domElement, 0, 0);
     const bin = atob(out.toDataURL('image/png').split(',')[1]), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
     FICON1312[k] = URL.createObjectURL(new Blob([u8], { type: 'image/png' }));
@@ -9669,25 +9676,24 @@ function sticker1313(emb, a, b) {
   const shapes = EMB1313[emb] || EMB1313.burst, id = 'st' + emb + a.slice(1) + b.slice(1), T = { a: `url(#${id}a)`, b: `url(#${id}b)`, w: '#ffffff', k: '#141821', l: shade1313(a, .45), d: shade1313(a, -.45), n: 'none' };
   const fillOf = t => T[t] || t, ink = '#141821';
   const grad = (n, c) => `<linearGradient id="${id}${n}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade1313(c, .4)}"/><stop offset=".55" stop-color="${c}"/><stop offset="1" stop-color="${shade1313(c, -.35)}"/></linearGradient>`;
-  const draw = (mode) => shapes.map(([d, f, s, w]) => { const stroked = f === 'n';
-    if (mode === 'white') return `<path d="${d}" fill="${stroked ? 'none' : '#fff'}" stroke="#fff" stroke-width="${(stroked ? (w || 4) : 0) + 13}" stroke-linejoin="round" stroke-linecap="round"/>`;
-    if (mode === 'ink') return `<path d="${d}" fill="${stroked ? 'none' : ink}" stroke="${ink}" stroke-width="${(stroked ? (w || 4) : 0) + 5}" stroke-linejoin="round" stroke-linecap="round"/>`;
-    return `<path d="${d}" fill="${stroked ? 'none' : fillOf(f)}"${stroked ? ` stroke="${fillOf(s)}" stroke-width="${w || 4}" stroke-linecap="round" stroke-linejoin="round"` : ''}/>`; }).join('');
+  const draw = (mode) => shapes.map(([d, f, s, w, tr]) => { const stroked = f === 'n', T2 = tr ? ` transform="${tr}"` : '';
+    if (mode === 'white') return `<path${T2} d="${d}" fill="${stroked ? 'none' : '#fff'}" stroke="#fff" stroke-width="${(stroked ? (w || 4) : 0) + 13}" stroke-linejoin="round" stroke-linecap="round"/>`;
+    if (mode === 'ink') return `<path${T2} d="${d}" fill="${stroked ? 'none' : ink}" stroke="${ink}" stroke-width="${(stroked ? (w || 4) : 0) + 5}" stroke-linejoin="round" stroke-linecap="round"/>`;
+    return `<path${T2} d="${d}" fill="${stroked ? 'none' : fillOf(f)}"${stroked ? ` stroke="${fillOf(s)}" stroke-width="${w || 4}" stroke-linecap="round" stroke-linejoin="round"` : ''}/>`; }).join('');
   // 13.17: illustrated finish. A colour glow and burst behind, an outer glow, gloss and shade inside the shapes, sparkles around
-  const solids = shapes.filter(q => q[1] !== 'n').map(q => `<path d="${q[0]}"/>`).join(''), star = (x, y, r) => `M${x} ${y - r}C${x + r * .18} ${y - r * .18} ${x + r * .18} ${y - r * .18} ${x + r} ${y}C${x + r * .18} ${y + r * .18} ${x + r * .18} ${y + r * .18} ${x} ${y + r}C${x - r * .18} ${y + r * .18} ${x - r * .18} ${y + r * .18} ${x - r} ${y}C${x - r * .18} ${y - r * .18} ${x - r * .18} ${y - r * .18} ${x} ${y - r}Z`;
+  const solids = shapes.filter(q => q[1] !== 'n').map(q => `<path${q[4] ? ` transform="${q[4]}"` : ''} d="${q[0]}"/>`).join(''), star = (x, y, r) => `M${x} ${y - r}C${x + r * .18} ${y - r * .18} ${x + r * .18} ${y - r * .18} ${x + r} ${y}C${x + r * .18} ${y + r * .18} ${x + r * .18} ${y + r * .18} ${x} ${y + r}C${x - r * .18} ${y + r * .18} ${x - r * .18} ${y + r * .18} ${x - r} ${y}C${x - r * .18} ${y - r * .18} ${x - r * .18} ${y - r * .18} ${x} ${y - r}Z`;
   let rays = ''; for (let i = 0; i < 12; i++) { const an = i / 12 * TAU, an2 = an + .12; rays += `M50 50L${(50 + Math.cos(an) * 62).toFixed(1)} ${(50 + Math.sin(an) * 62).toFixed(1)}L${(50 + Math.cos(an2) * 62).toFixed(1)} ${(50 + Math.sin(an2) * 62).toFixed(1)}Z`; }
   const sparks = [[6, 10, 7], [94, 16, 5], [90, 90, 6]].map(([x, y, r]) => `<path d="${star(x, y, r)}" fill="#fff" stroke="${ink}" stroke-width="1.6"/>`).join('');
   return `<svg viewBox="-10 -10 120 120" aria-hidden="true" class="stick-ic"><defs>${grad('a', a)}${grad('b', b)}`
     + `<radialGradient id="${id}g"><stop offset="0" stop-color="${b}" stop-opacity=".8"/><stop offset=".55" stop-color="${a}" stop-opacity=".35"/><stop offset="1" stop-color="${a}" stop-opacity="0"/></radialGradient>`
     + `<linearGradient id="${id}h" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".7" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient>`
     + `<clipPath id="${id}c">${solids}</clipPath><filter id="${id}f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3.2"/></filter></defs>`
-    + `<circle cx="50" cy="50" r="58" fill="url(#${id}g)"/><path d="${rays}" fill="${b}" opacity=".16"/>`
-    + `<g filter="url(#${id}f)" opacity=".85">${draw('white').replace(/#fff/g, shade1313(a, .35))}</g>`
     + `<g transform="translate(2.5 3.5)" opacity=".35">${draw('ink')}</g>${draw('white')}${draw('ink')}${draw('fill')}`
-    + `<rect x="-10" y="-10" width="120" height="120" fill="url(#${id}h)" clip-path="url(#${id}c)"/>${sparks}</svg>`;
+    + `<rect x="-10" y="-10" width="120" height="120" fill="url(#${id}h)" clip-path="url(#${id}c)"/></svg>`;
 }
 function fruitSticker1313(f) { const sk = skinOf(f.id), base = (sk && sk.c) || f.color, C = !sk && FRUIT_STICKC1313[f.id]; return sticker1313(FRUIT_STICK1313[f.id] || 'burst', C ? C[0] : base, C ? C[1] : shade1313(base, .55)); }
 function styleSticker1313(id) {
+  if (typeof STYLE_STICK1318 !== 'undefined' && STYLE_STICK1318[id]) { const q = STYLE_STICK1318[id]; return sticker1313(q[0], q[1], q[2]); }
   const it = ITEMS[id] || {}, n = (it.name || id).toLowerCase(), c = it.color || it.c || '#ffb02a';
   const pick = [[/dragon/, 'horned', '#c83a1a', '#ffd23a'], [/electric claw|claw|talon/, 'claw', '#5ab4ff', '#ffffff'], [/electric/, 'bolt', '#ffe14a', '#5a8aff'], [/water|shark|tide|fish/, 'wave', '#2a8aff', '#c8f0ff'],
     [/death|ghoul|reaper/, 'blob', '#6a3aa8', '#d8b8ff'], [/dark step|black leg|kick|leg/, 'flame', '#ff6a1f', '#ffe14a'], [/sanguine|blood|vampire/, 'drop', '#c8102a', '#ff8a9a'], [/godhuman|god/, 'sparkle', '#ffe14a', '#ff5a9a'],
@@ -9696,21 +9702,21 @@ function styleSticker1313(id) {
 }
 // ================= 13.16: every fruit gets its own built-up model: signature parts placed on the skin, plus a soft aura glow (all original designs) =================
 const SIG1316 = {
-  dragon: [['crest', '#ffb02a'], ['hornsC', '#f4ecd8'], ['teeth'], ['leafCrown', '#3fae4a'], ['aura', '#ff7a2a']],
+  dragon: [['crest', '#ffb02a'], ['hornsC', '#f4ecd8'], ['leafCrown', '#3fae4a'], ['aura', '#ff7a2a']],
   kitsune: [['wisps', '#6ab0ff', 5], ['tails', '#e8f4ff', 3], ['aura', '#5a8aff']],
   yeti: [['fur', '#ffffff'], ['icicles', '#bff4ff'], ['hornsC', '#f4ecd8'], ['aura', '#bfefff']],
-  gas: [['wisps', '#9affc8', 3], ['aura', '#7affb0']], tiger: [['teeth'], ['fur', '#ff9a2a'], ['aura', '#ffb02a']],
+  gas: [['wisps', '#9affc8', 3], ['aura', '#7affb0']], tiger: [['fur', '#ff9a2a'], ['aura', '#ffb02a']],
   lightning: [['bolts', '#fff36a'], ['aura', '#8a6aff']], dough: [['drips', '#fff6ee']], pain: [['spikesBack', '#ff6a9a'], ['aura', '#ff4f8a']],
-  trex: [['teeth'], ['crest', '#3a6a1a']], gravity: [['orbs', '#c8a0ff', 3], ['aura', '#7a3aff']], mammoth: [['fur', '#6a4a2a']],
-  spirit: [['wisps', '#ffffff', 3], ['wisps', '#3a2a5a', 3], ['aura', '#d8d8ff']], venom: [['teeth'], ['drips', '#a0ff4a'], ['aura', '#7aff3a']],
-  shadow: [['spikesBack', '#1a0a2a'], ['teeth'], ['aura', '#6a3aff']], control: [['orbs', '#ffffff', 4], ['aura', '#9afcff']], portal: [['aura', '#6ab8ff']],
+  trex: [['crest', '#3a6a1a']], gravity: [['orbs', '#c8a0ff', 3], ['aura', '#7a3aff']], mammoth: [['fur', '#6a4a2a']],
+  spirit: [['wisps', '#ffffff', 3], ['wisps', '#3a2a5a', 3], ['aura', '#d8d8ff']], venom: [['drips', '#a0ff4a'], ['aura', '#7aff3a']],
+  shadow: [['spikesBack', '#1a0a2a'], ['aura', '#6a3aff']], control: [['orbs', '#ffffff', 4], ['aura', '#9afcff']], portal: [['aura', '#6ab8ff']],
   buddha: [['lotus', '#ffd23a'], ['aura', '#ffe08a']], blizzard: [['crystals', '#dff6ff', 6], ['icicles', '#dff6ff'], ['aura', '#bfefff']],
   creation: [['crystals', '#ffe08a', 5], ['aura', '#fff2b8']], phoenix: [['wisps', '#3fa8ff', 4], ['featherWings', '#3fa8ff'], ['aura', '#3fa8ff']],
   sound: [['orbs', '#e8d0ff', 3], ['aura', '#b08aff']], spider: [['legs', '#2a2a2a']], love: [['aura', '#ff7ab8']], magma: [['drips', '#ff5a1a', true], ['wisps', '#ffb02a', 2], ['aura', '#ff4a1a']],
   quake: [['crystals', '#cfe4ff', 3]], diamond: [['crystals', '#bff4ff', 5]], light: [['aura', '#fff3a0']], ghost: [['drips', '#e8f0ff'], ['aura', '#c8d8ff']],
   eagle: [['featherWings', '#8a5a2e']], ice: [['crystals', '#ffffff', 4], ['icicles', '#dff6ff']], dark: [['spikesBack', '#2a1446'], ['aura', '#5a2aaa']],
   flame: [['wisps', '#ffb02a', 4], ['aura', '#ff7a1a']], smoke: [['fur', '#f0f4f8']], spring: [['coil', '#3a8a2a']], spin: [['pinwheel', '#ffd27a']], blade: [['pinwheel', '#dfe8f0']],
-  leviathan: [['fins', '#2ad8c8'], ['teeth'], ['hornsC', '#e8e2d0'], ['aura', '#2ad8c8']], oni: [['hornsC', '#f4ecd8'], ['teeth'], ['aura', '#ff2a1a']],
+  leviathan: [['fins', '#2ad8c8'], ['hornsC', '#e8e2d0'], ['aura', '#2ad8c8']], oni: [['hornsC', '#f4ecd8'], ['aura', '#ff2a1a']],
   celestial: [['orbs', '#ffffff', 3], ['aura', '#9ad8ff']], cosmic: [['orbs', '#ff8af0', 3], ['aura', '#b05aff']], void: [['orbs', '#8a5aff', 3], ['aura', '#3a1a6a']],
   singularity: [['aura', '#6a3aff']], storm: [['bolts', '#fff36a'], ['aura', '#6a8aff']], plasma: [['bolts', '#ff8af0'], ['aura', '#ff4fd8']], cyber: [['aura', '#2affff']],
   volcanic: [['drips', '#ff7a1a', true], ['wisps', '#ffb02a', 2], ['aura', '#ff5a1a']], kinetic: [['bolts', '#ffffff']], overgrowth: [['leafCrown', '#3fae4a']],
@@ -9753,12 +9759,122 @@ function addSig1316(g, f) {
     leafCrown: c => { const mat = new THREE.MeshPhongMaterial({ color: c, side: THREE.DoubleSide, shininess: 40 }); for (let i = 0; i < 6; i++) { const lf = new THREE.Mesh(LEAFGEO1312, mat), a = i / 6 * TAU; lf.scale.setScalar(1.35); lf.position.set(Math.cos(a) * .2, top - .05, Math.sin(a) * .2); lf.rotation.set(0, -a, .75); g.add(lf); } },
     orbs: (c, n = 3) => { const mat = gl(c); for (let i = 0; i < n; i++) { const a = i / n * TAU, m = mesh('sphereHi', mat, .22, .22, .22); m.position.set(Math.cos(a) * 1.45, Math.sin(a * 2) * .3 + .1, Math.sin(a) * 1.45); } g.userData.particles = c; },
     spikesBack: c => { const mat = ph(c); for (let i = 0; i < 9; i++) { const a = -.5 + i * .25, sd = i % 2 ? -.25 : .25, s = surf(sd, Math.cos(a), -Math.sin(a) - .3); along(mesh('coneHi', mat, .2, .55 + R() * .3, .2), s.p, s.n, .2); } },
-    aura: c => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: GLOWTEX1316, color: c, transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthWrite: false })); sp.scale.set(4.2, 4.2, 1); sp.renderOrder = -1; g.add(sp); g.userData.aura = sp; if (!g.userData.particles) g.userData.particles = c; },
+    aura: c => { if (!g.userData.particles) g.userData.particles = c; },   // 13.18: no glow halo, only the rising sparkles
   };
   for (const [k, ...a] of parts) try { P[k] && P[k](...a); } catch (e) {}
 }
 const _makeFruit3D1316 = makeFruit3D;
 makeFruit3D = function (f, skinC) { const g = _makeFruit3D1316(f, skinC); addSig1316(g, f); return g; };
+// ================= 13.18: every fruit has its own face (eye style + mouth style), detail relief on the skin, no glow halos =================
+// [eyes, mouth, eye colour]
+const FACE1318 = {
+  rocket: ['round', 'smile'], spin: ['dots', 'o'], blade: ['glare', 'smirk', '#5a7a9a'], spring: ['cute', 'open'], bomb: ['angry', 'zigzag'], smoke: ['sleepy', 'none'], spike: ['angry', 'fangs'],
+  flame: ['glare', 'grin', '#ff7a1a'], ice: ['round', 'o', '#3a8aff'], sand: ['sleepy', 'smirk'], dark: ['hollow', 'none'], eagle: ['slit', 'beak', '#ffc81a'], diamond: ['cute', 'smile'], light: ['happy', 'open'],
+  rubber: ['round', 'tongue'], ghost: ['hollow', 'o'], magma: ['angry', 'open'], quake: ['glare', 'frown', '#3a6aff'], buddha: ['sleepy', 'smile'], love: ['cute', 'smile'], creation: ['round', 'smirk', '#c8a020'],
+  spider: ['spider', 'fangs'], sound: ['happy', 'o'], phoenix: ['slit', 'beak', '#ffb02a'], portal: ['cyclops', 'none', '#3a8aff'], lightning: ['glare', 'zigzag', '#ffd23a'], pain: ['angry', 'frown'],
+  blizzard: ['glare', 'fangs', '#2ad8ff'], gravity: ['cyclops', 'frown', '#8a3aff'], mammoth: ['round', 'none'], trex: ['slit', 'grin', '#ffd23a'], dough: ['cute', 'open'], shadow: ['hollow', 'zigzag'],
+  venom: ['slit', 'fangs', '#7aff3a'], gas: ['sleepy', 'smirk'], magnet: ['angry', 'frown'], singularity: ['cyclops', 'none', '#ffffff'], volcanic: ['angry', 'grin'], chrono: ['visor', 'none', '#ffd23a'],
+  kinetic: ['glare', 'smirk', '#3a8aff'], plasma: ['glare', 'open', '#ff4fd8'], overgrowth: ['sleepy', 'smile'], cyber: ['visor', 'none', '#2affff'], void: ['hollow', 'none'], storm: ['glare', 'frown', '#ffd23a'],
+  vine: ['dots', 'smile'], origami: ['dots', 'none'], impact: ['angry', 'grin'], cosmic: ['cute', 'o'], spirit: ['sleepy', 'smile'], yeti: ['angry', 'fangs'], tiger: ['slit', 'fangs', '#ffb02a'],
+  kitsune: ['sly', 'smirk', '#6ab0ff'], control: ['visor', 'none', '#ffffff'], dragon: ['slit', 'grin', '#ffb02a'], water: ['round', 'o', '#2a7aff'], happiness: ['happy', 'open'], leviathan: ['slit', 'grin', '#2ad8c8'],
+  oni: ['glare', 'fangs', '#ffd200'], celestial: ['sleepy', 'smile'], overgrown: ['angry', 'zigzag'], cardboard: ['dots', 'frown'], absoluteZero: ['glare', 'fangs', '#bfefff'],
+};
+function face1318(g, body, f, base) {
+  const F = FACE1318[f.id] || ['angry', 'none'], ec = F[2] || '#2a1206', ink = new THREE.MeshBasicMaterial({ color: '#140a06' }), white = new THREE.MeshPhongMaterial({ color: '#ffffff', shininess: 90 }), lidM = new THREE.MeshPhongMaterial({ color: col1312(base, -.15), shininess: 40 });
+  body.updateMatrixWorld(true); const rc = new THREE.Raycaster();
+  const spot = (x, y) => { rc.set(new THREE.Vector3(x, y, 5), new THREE.Vector3(0, 0, -1)); const h = rc.intersectObject(body)[0]; if (!h) return null; const n = h.face.normal.clone().normalize(), e = new THREE.Group(); e.position.copy(h.point).addScaledVector(n, .012); e.lookAt(h.point.clone().add(n)); g.add(e); return e; };
+  const part = (e, geo, mat, sx, sy, sz, x = 0, y = 0, z = 0, rz = 0) => { const m = new THREE.Mesh(GEO[geo], mat); m.scale.set(sx, sy, sz); m.position.set(x, y, z); m.rotation.z = rz; e.add(m); return m; };
+  const E = {
+    angry: sd => { const e = spot(sd * .34, .12); if (!e) return; e.rotateZ(sd * .5); part(e, 'sphereHi', ink, .5, .22, .05); part(e, 'sphereHi', white, .4, .12, .06, sd * -.02, -.01, .02); part(e, 'box', ink, .5, .07, .05, sd * .02, .14, .01, sd * -.18); },
+    glare: sd => { const e = spot(sd * .33, .1); if (!e) return; e.rotateZ(sd * .35); part(e, 'sphereHi', ink, .46, .26, .05); part(e, 'sphereHi', white, .38, .18, .06, 0, 0, .02); part(e, 'sphereHi', new THREE.MeshBasicMaterial({ color: ec }), .14, .14, .05, sd * -.06, -.01, .05); part(e, 'sphereHi', ink, .06, .06, .04, sd * -.06, -.01, .075); part(e, 'box', ink, .56, .1, .05, 0, .17, .02, sd * -.25); },
+    round: sd => { const e = spot(sd * .3, .14); if (!e) return; part(e, 'sphereHi', ink, .38, .4, .05); part(e, 'sphereHi', white, .32, .34, .07, 0, 0, .02); part(e, 'sphereHi', F[2] ? new THREE.MeshBasicMaterial({ color: ec }) : ink, .16, .18, .05, sd * -.04, -.02, .06); part(e, 'sphereHi', ink, .08, .09, .04, sd * -.04, -.02, .085); part(e, 'sphereHi', white, .05, .05, .03, sd * -.08, .05, .1); },
+    cute: sd => { const e = spot(sd * .28, .12); if (!e) return; part(e, 'sphereHi', ink, .17, .28, .05); part(e, 'sphereHi', white, .07, .08, .03, .02, .06, .03); part(e, 'sphereHi', white, .03, .03, .03, -.03, -.05, .03); },
+    dots: sd => { const e = spot(sd * .26, .1); if (!e) return; part(e, 'sphereHi', ink, .12, .12, .05); },
+    sleepy: sd => { const e = spot(sd * .3, .1); if (!e) return; part(e, 'sphereHi', ink, .4, .24, .05); part(e, 'sphereHi', white, .32, .18, .06, 0, 0, .02); part(e, 'sphereHi', ink, .12, .12, .05, sd * -.03, -.03, .05); part(e, 'box', lidM, .44, .14, .08, 0, .07, .06); part(e, 'box', ink, .44, .03, .05, 0, .005, .1); },
+    sly: sd => { const e = spot(sd * .32, .12); if (!e) return; e.rotateZ(sd * .3); part(e, 'sphereHi', ink, .44, .16, .05); part(e, 'sphereHi', new THREE.MeshBasicMaterial({ color: ec }), .36, .09, .06, 0, -.005, .02); part(e, 'sphereHi', ink, .05, .09, .04, 0, -.005, .05); },
+    slit: sd => { const e = spot(sd * .33, .12); if (!e) return; e.rotateZ(sd * .4); part(e, 'sphereHi', ink, .46, .26, .05); part(e, 'sphereHi', new THREE.MeshBasicMaterial({ color: ec }), .38, .18, .06, 0, 0, .02); part(e, 'sphereHi', ink, .05, .17, .04, 0, 0, .05); part(e, 'box', ink, .5, .08, .05, 0, .16, .02, sd * -.3); },
+    hollow: sd => { const e = spot(sd * .28, .1); if (!e) return; e.rotateZ(sd * .25); part(e, 'sphereHi', ink, .26, .38, .06); },
+    happy: sd => { const e = spot(sd * .3, .12); if (!e) return; const a = part(e, 'smile', ink, .32, .3, .25, 0, -.04, .01); a.rotation.z = 0; },
+    spider: () => { [[-.32, .2, .18], [.32, .2, .18], [-.14, .3, .13], [.14, .3, .13], [-.42, .02, .1], [.42, .02, .1]].forEach(([x, y, r]) => { const e = spot(x, y); if (!e) return; part(e, 'sphereHi', ink, r, r, .05); part(e, 'sphereHi', white, r * .3, r * .3, .03, -r * .15, r * .18, .03); }); },
+    cyclops: () => { const e = spot(0, .14); if (!e) return; part(e, 'sphereHi', ink, .66, .66, .05); part(e, 'sphereHi', white, .56, .56, .07, 0, 0, .02); part(e, 'sphereHi', new THREE.MeshBasicMaterial({ color: ec }), .3, .3, .05, 0, -.02, .06); part(e, 'sphereHi', ink, .14, .14, .04, 0, -.02, .085); part(e, 'sphereHi', white, .08, .08, .03, -.08, .06, .1); part(e, 'box', ink, .7, .08, .05, 0, .34, .02); },
+    visor: () => { const e = spot(0, .12); if (!e) return; part(e, 'box', ink, 1.0, .26, .06); part(e, 'box', new THREE.MeshPhongMaterial({ color: ec, shininess: 140, specular: 0xffffff }), .9, .16, .07, 0, 0, .02); part(e, 'box', white, .2, .04, .03, -.25, .04, .06); },
+  };
+  const M = {
+    none: () => {}, smile: () => { const e = spot(0, -.32); if (e) { const s = part(e, 'smile', ink, .42, .34, .25); s.rotation.z = Math.PI; } },
+    frown: () => { const e = spot(0, -.42); if (e) part(e, 'smile', ink, .36, .26, .25); },
+    smirk: () => { const e = spot(.08, -.34); if (e) { const s = part(e, 'smile', ink, .32, .24, .25); s.rotation.z = Math.PI + .35; } },
+    o: () => { const e = spot(0, -.36); if (e) { part(e, 'sphereHi', ink, .16, .2, .05); part(e, 'sphereHi', new THREE.MeshBasicMaterial({ color: '#5a0a0a' }), .1, .13, .03, 0, 0, .02); } },
+    open: () => { const e = spot(0, -.36); if (e) { part(e, 'sphereHi', ink, .5, .26, .05); part(e, 'sphereHi', new THREE.MeshBasicMaterial({ color: '#7a1020' }), .4, .16, .04, 0, -.03, .02); part(e, 'box', white, .36, .05, .03, 0, .07, .04); } },
+    tongue: () => { const e = spot(0, -.34); if (e) { part(e, 'sphereHi', ink, .5, .24, .05); part(e, 'sphereHi', new THREE.MeshPhongMaterial({ color: '#ff5a7a' }), .22, .28, .06, .06, -.12, .04); } },
+    grin: () => { const e = spot(0, -.36); if (!e) return; part(e, 'sphereHi', ink, .7, .22, .05); for (let i = 0; i < 6; i++) { const t = part(e, 'coneHi', white, .09, .16, .06, -.3 + i * .12, i % 2 ? -.04 : .04, .03); t.rotation.z = i % 2 ? 0 : Math.PI; } },
+    fangs: () => { const e = spot(0, -.36); if (!e) return; part(e, 'sphereHi', ink, .56, .16, .05); for (const sd of [-1, 1]) { const t = part(e, 'coneHi', white, .1, .24, .06, sd * .16, -.06, .03); t.rotation.z = Math.PI; } },
+    zigzag: () => { const e = spot(0, -.36); if (!e) return; for (let i = 0; i < 5; i++) part(e, 'box', ink, .17, .05, .04, -.28 + i * .14, 0, .02, i % 2 ? .6 : -.6); },
+    beak: () => { const e = spot(0, -.18); if (!e) return; const b = part(e, 'coneHi', new THREE.MeshPhongMaterial({ color: '#ffb02a', shininess: 60 }), .3, .45, .3, 0, 0, .12); b.rotation.x = Math.PI / 2 + .5; },
+  };
+  if (E[F[0]].length) [-1, 1].forEach(sd => E[F[0]](sd)); else E[F[0]]();
+  (M[F[1]] || M.none)();
+}
+// 13.18: more emblems so that no two fruits or fighting styles share a sticker. Shapes may carry a 5th item: an SVG transform.
+Object.assign(EMB1313, (() => {
+  const C = (cx, cy, r) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${r * 2} 0a${r} ${r} 0 1 0 ${-r * 2} 0Z`, E = (cx, cy, rx, ry) => `M${cx - rx} ${cy}a${rx} ${ry} 0 1 0 ${rx * 2} 0a${rx} ${ry} 0 1 0 ${-rx * 2} 0Z`;
+  const S = (cx, cy, n, r1, r2, rot = -Math.PI / 2) => { let d = ''; for (let i = 0; i < n * 2; i++) { const a = rot + i * Math.PI / n, r = i % 2 ? r2 : r1; d += (i ? 'L' : 'M') + (cx + Math.cos(a) * r).toFixed(1) + ' ' + (cy + Math.sin(a) * r).toFixed(1); } return d + 'Z'; };
+  const FIST = 'M26 40C26 30 34 26 40 30C42 22 52 22 54 30C56 22 66 22 68 32C72 26 80 30 80 40V64C80 80 68 90 52 90H42C30 90 22 80 22 68V56C22 48 26 44 26 40Z', KN = 'M40 30V48M54 30V48M68 32V48';
+  const PALM = 'M30 92V54L20 40Q18 32 26 32L36 44V18Q36 10 43 10Q50 10 50 18V40V14Q50 6 57 6Q64 6 64 14V40V18Q64 10 71 10Q78 10 78 18V60Q78 92 52 92Z';
+  const FLAME = 'M50 6C66 26 82 40 80 62C78 82 64 94 50 94C35 94 20 82 20 62C20 46 32 38 36 22C42 32 45 38 50 42C53 30 51 18 50 6Z';
+  const BOLT = 'M60 4L22 56L46 56L36 96L80 38L55 38L68 4Z';
+  const WAVE = 'M4 72C18 40 40 28 62 34C46 40 42 52 50 58C60 66 78 60 84 44C92 58 94 74 96 90H4Z';
+  const BOOT = 'M30 8H60V56L86 66Q94 70 92 80V90H22Q18 90 18 84V60L30 50Z';
+  return {
+    blocks: [['M10 52L30 42L50 52V76L30 86L10 76Z', 'a'], ['M50 52L70 42L90 52V76L70 86L50 76Z', 'b'], ['M30 22L50 12L70 22V46L50 56L30 46Z', 'l'], ['M10 52L30 62L50 52M30 62V86M50 52L70 62L90 52M70 62V86M30 22L50 32L70 22M50 32V56', 'n', 'k', 2.5]],
+    snowstorm: [['M14 30Q40 16 66 26Q50 34 70 40Q86 44 92 32', 'n', 'b', 7], ['M8 66Q34 52 60 62Q44 70 64 76Q80 80 88 68', 'n', 'b', 7], ['M50 26V74M30 38L70 62M70 38L30 62', 'n', 'a', 8], [C(50, 50, 8), 'w']],
+    gravityWell: [[E(50, 66, 44, 14), 'd'], [E(50, 66, 30, 9), 'k'], [C(50, 34, 18), 'a'], ['M30 6L38 14L46 6M54 6L62 14L70 6', 'n', 'b', 5]],
+    blackhole: [[E(50, 52, 46, 16), 'b'], [C(50, 50, 22), 'k'], [E(50, 52, 46, 16), 'n', 'l', 3], ['M10 52Q50 66 90 52', 'n', 'w', 3]],
+    gasSkull: [['M24 78C8 78 4 60 16 54C12 36 32 28 42 36C46 18 72 16 76 36C92 34 98 56 86 64C94 78 80 84 72 78Z', 'a'], ['M34 50L44 60M44 50L34 60M56 50L66 60M66 50L56 60', 'n', 'k', 5], ['M40 70Q50 64 60 70', 'n', 'k', 4]],
+    serpent: [['M6 88C20 66 40 64 50 74C60 84 80 82 94 66V94H6Z', 'b'], ['M40 66C30 52 30 30 44 18C56 8 76 12 82 26L90 30L80 36C76 46 64 50 56 46C50 54 52 62 56 70Z', 'a'], [C(66, 26, 5), 'k'], ['M44 18L38 4L52 14M58 12L60 0L66 12', 'w']],
+    tree: [['M42 92V60H58V92Z', 'd'], [C(50, 38, 30), 'a'], [C(30, 52, 16), 'a'], [C(70, 52, 16), 'a'], [C(40, 30, 8), 'l'], [C(64, 44, 6), 'b']],
+    thorns: [['M14 86C30 60 26 40 46 30C66 20 80 34 70 50C62 62 46 56 52 46', 'n', 'a', 9], ['M20 70L10 66M30 50L20 42M42 34L38 22M62 24L70 14M76 42L88 44M58 56L60 68', 'n', 'd', 5], [S(52, 46, 5, 9, 4), 'b']],
+    arrows: [['M8 30H60L54 20L80 36L54 52L60 42H8Z', 'a'], ['M20 64H70L64 54L92 70L64 86L70 76H20Z', 'b'], ['M4 30H18M12 64H24', 'n', 'w', 4]],
+    crashFist: [[FIST, 'a'], [KN, 'n', 'k', 3], ['M6 14L18 24M4 40H16M10 66L20 60M88 10L82 22M96 34L84 38', 'n', 'b', 5]],
+    eruption: [['M6 92L34 46H66L94 92Z', 'd'], ['M34 46Q50 54 66 46L72 58Q58 66 50 58Q42 66 28 58Z', 'a'], [C(30, 20, 7), 'b'], [C(52, 10, 6), 'b'], [C(72, 22, 8), 'b'], ['M44 44L36 26M56 44L64 30M50 44V20', 'n', 'a', 5]],
+    lavaBlob: [['M50 10C70 10 84 26 84 46C84 60 78 66 78 76C78 84 72 86 70 80C68 72 64 70 62 80C60 92 52 94 50 84C48 74 44 72 40 82C38 88 30 88 30 80C30 70 18 64 18 46C18 26 30 10 50 10Z', 'a'], ['M34 34Q44 24 58 28M42 50L52 42L60 52', 'n', 'b', 5]],
+    plasmaOrb: [[C(50, 50, 24), 'a'], [C(50, 50, 12), 'w'], ['M26 50Q12 34 20 16M74 50Q90 64 82 84M50 26Q66 10 84 16M50 74Q34 90 16 84', 'n', 'b', 5]],
+    shade: [['M50 6C70 6 82 22 82 42V92Q66 84 50 92Q34 84 18 92V42C18 22 30 6 50 6Z', 'a'], ['M30 40Q40 34 46 44Q40 50 32 48ZM70 40Q60 34 54 44Q60 50 68 48Z', 'b'], ['M38 66Q50 72 62 66', 'n', 'b', 3]],
+    palmLotus: [['M10 80Q30 62 50 80Q70 62 90 80Q70 94 50 88Q30 94 10 80Z', 'b'], [PALM, 'a', null, null, 'translate(18 0) scale(.64)'], [C(50, 30, 6), 'w']],
+    yetiHead: [['M12 50C12 24 30 10 50 10S88 24 88 50L84 80Q68 96 50 96Q32 96 16 80Z', 'a'], ['M24 30L14 6L36 22ZM76 30L86 6L64 22Z', 'l'], ['M26 52H74V64Q50 74 26 64Z', 'w'], [E(36, 46, 7, 5), 'b'], [E(64, 46, 7, 5), 'b'], ['M32 74L38 84L44 74M56 74L62 84L68 74', 'w']],
+    oniMask: [['M20 30Q20 14 50 12Q80 14 80 30L84 60Q76 92 50 94Q24 92 16 60Z', 'a'], ['M24 26L14 2L38 18ZM76 26L86 2L62 18Z', 'w'], ['M28 42L46 50L28 54ZM72 42L54 50L72 54Z', 'b'], ['M30 68Q50 58 70 68L64 82Q50 88 36 82Z', 'k'], ['M36 68L40 80M64 68L60 80', 'n', 'w', 4]],
+    dinoJaw: [['M8 40C8 20 30 10 56 12C76 14 92 24 92 36L90 44H40V56H88Q88 72 66 78L24 80C12 76 8 60 8 40Z', 'a'], ['M40 44H90V50H40ZM40 52H86V56H40Z', 'k'], ['M44 44L48 52L52 44L56 52L60 44L64 52L68 44L72 52L76 44L80 52L84 44', 'w'], [C(30, 30, 6), 'b']],
+    iceCube: [['M14 32L50 16L86 32V72L50 88L14 72Z', 'a'], ['M14 32L50 48L86 32L50 16Z', 'l'], ['M14 32L50 48L86 32M50 48V88', 'n', 'w', 3], ['M24 50L30 62M66 56L74 50M58 70L62 78', 'n', 'w', 3]],
+    feather: [['M74 8C40 18 22 46 24 86L32 90C38 56 54 32 74 8Z', 'a'], ['M74 8C66 40 52 66 32 90', 'n', 'w', 3], ['M54 30L66 34M44 46L58 52M36 62L48 70', 'n', 'd', 3]],
+    // fighting styles
+    boot: [[BOOT, 'a'], [FLAME, 'b', null, null, 'translate(52 -6) scale(.42)'], ['M30 22H60', 'n', 'k', 3]],
+    zapFist: [[FIST, 'a'], [KN, 'n', 'k', 3], [BOLT, 'b', null, null, 'translate(62 -2) scale(.4)']],
+    waterPalm: [[WAVE, 'b', null, null, 'translate(0 30) scale(1 .7)'], [PALM, 'a', null, null, 'translate(14 -4) scale(.72)']],
+    breath: [['M6 50C6 26 22 14 40 16L62 26L50 36L64 40L46 50L60 56L38 62C22 64 6 62 6 50Z', 'a'], [C(26, 34, 4), 'k'], ['M58 30Q80 20 96 30Q80 44 96 56Q80 66 60 56', 'b']],
+    muscle: [['M14 86C10 66 18 52 30 46L36 30Q40 18 52 18Q62 18 62 30V40C74 36 88 44 88 58C88 76 72 88 52 88Z', 'a'], ['M36 46Q50 40 58 50', 'n', 'd', 4], ['M64 60Q74 54 80 64', 'n', 'l', 4]],
+    skull: [['M50 8C72 8 88 24 88 46C88 60 80 66 76 70V84H24V70C20 66 12 60 12 46C12 24 28 8 50 8Z', 'a'], [E(34, 48, 10, 11), 'k'], [E(66, 48, 10, 11), 'k'], ['M46 64L50 56L54 64Z', 'k'], ['M36 84V74M50 84V74M64 84V74', 'n', 'k', 3]],
+    sharkFin: [[WAVE, 'b', null, null, 'translate(0 20) scale(1 .8)'], ['M24 74C34 50 46 20 74 8C66 34 66 56 74 74Z', 'a'], ['M60 26Q58 46 64 66', 'n', 'l', 3]],
+    talon: [['M30 6H62V40L74 54L66 60L56 50V58L66 76L58 82L48 64L40 84L32 80L36 58L26 50Z', 'a'], ['M74 54L90 64L80 68ZM66 76L78 94L68 92ZM40 84L34 98L28 90Z', 'w']],
+    godFist: [[FIST, 'a', null, null, 'translate(0 8)'], [KN, 'n', 'k', 3, 'translate(0 8)'], ['M28 10L36 22L44 8L50 22L56 8L64 22L72 10L68 26H32Z', 'b']],
+    bloodFang: [['M10 20Q50 4 90 20Q86 40 50 44Q14 40 10 20Z', 'k'], ['M26 30L34 64L42 32ZM58 32L66 64L74 30Z', 'w'], ['M34 66C40 76 44 82 34 90C24 82 28 76 34 66Z', 'a']],
+    windSwirl: [['M8 36C30 36 56 30 62 18C68 8 86 12 84 26C82 38 66 38 64 30', 'n', 'a', 8], ['M8 58H70C84 58 90 72 80 80C72 86 62 80 66 72', 'n', 'b', 8], ['M20 78H48', 'n', 'a', 6]],
+    fan: [['M50 86L8 42Q50 4 92 42Z', 'a'], ['M50 86L22 30M50 86L38 20M50 86L50 16M50 86L62 20M50 86L78 30', 'n', 'd', 3], [C(50, 86, 6), 'b']],
+    emberFist: [[FIST, 'b'], [KN, 'n', 'k', 3], [FLAME, 'a', null, null, 'translate(4 -4) scale(.44)']],
+    shield: [['M50 6L86 18V48C86 72 70 88 50 96C30 88 14 72 14 48V18Z', 'a'], ['M50 18L74 26V48C74 64 64 76 50 82Z', 'l'], ['M50 6V96M14 40H86', 'n', 'k', 3]],
+    knuckles: [['M10 40H90V66H10Z', 'a'], [C(22, 40, 10), 'a'], [C(41, 40, 10), 'a'], [C(60, 40, 10), 'a'], [C(79, 40, 10), 'a'], [C(22, 40, 5), 'k'], [C(41, 40, 5), 'k'], [C(60, 40, 5), 'k'], [C(79, 40, 5), 'k'], ['M30 74H70', 'n', 'b', 8]],
+    cyclone: [['M50 50C50 40 62 38 66 46C72 58 60 70 48 68C30 66 24 46 34 34C46 20 72 22 82 40', 'n', 'a', 8], ['M10 70Q30 90 60 84', 'n', 'b', 6], ['M50 50C50 40 62 38 66 46', 'n', 'w', 3]],
+    meteor: [['M88 12L40 50L52 62Z', 'b'], ['M76 8L30 40L36 46ZM92 24L56 66L62 72Z', 'l'], [C(34, 66, 24), 'a'], ['M24 58L32 66M40 72L46 64M30 78L36 82', 'n', 'd', 4]],
+    voidFist: [[FIST, 'a'], [KN, 'n', 'k', 3], [C(80, 18, 14), 'k'], [E(80, 18, 20, 6), 'n', 'b', 3]],
+    shootingStar: [['M6 82L56 42L62 52Z', 'b'], ['M14 92L58 56L60 62Z', 'l'], [S(66, 34, 5, 30, 13), 'a']],
+    beads: [[C(50, 50, 38), 'n', 'd', 3], ...Array.from({ length: 10 }, (_, i) => [C(50 + Math.cos(i / 10 * Math.PI * 2) * 38, 50 + Math.sin(i / 10 * Math.PI * 2) * 38, 8), i % 5 ? 'a' : 'b']), [BOLT, 'b', null, null, 'translate(30 28) scale(.42)']],
+  };
+})());
+Object.assign(FRUIT_STICK1313, { creation: 'blocks', blizzard: 'snowstorm', gravity: 'gravityWell', void: 'blackhole', gas: 'gasSkull', leviathan: 'serpent', overgrowth: 'tree', overgrown: 'thorns',
+  kinetic: 'arrows', impact: 'crashFist', volcanic: 'eruption', magma: 'lavaBlob', eagle: 'feather', plasma: 'plasmaOrb', shadow: 'shade', buddha: 'palmLotus', yeti: 'yetiHead', oni: 'oniMask', trex: 'dinoJaw', absoluteZero: 'iceCube' });
+const STYLE_STICK1318 = { combat: ['fist', '#ffd27a', '#ff9a3a'], darkStep: ['boot', '#3a2a2a', '#ff6a1f'], electric: ['zapFist', '#5ab4ff', '#ffe14a'], waterKungFu: ['waterPalm', '#7ad8ff', '#2a8aff'],
+  dragonBreath: ['breath', '#c83a1a', '#ffb02a'], superhuman: ['muscle', '#ffd23a', '#ff9a1a'], deathStep: ['skull', '#e8e2d0', '#6a3aa8'], sharkmanKarate: ['sharkFin', '#3a7ab8', '#9ad8ff'], electricClaw: ['claw', '#5ab4ff', '#ffffff'],
+  dragonTalon: ['talon', '#c83a1a', '#ffe8c0'], godhuman: ['godFist', '#ffe8c0', '#ffd23a'], sanguineArt: ['bloodFang', '#c8102a', '#ff8a9a'], agileAir: ['windSwirl', '#c8f0ff', '#7ad8ff'], emberFist: ['emberFist', '#ff6a1f', '#ffd27a'],
+  galePalm: ['fan', '#9affd8', '#2a8a6a'], stoneGuard: ['shield', '#8a7a6a', '#c8b8a0'], infernoKnuckle: ['knuckles', '#c8a020', '#ff4a1a'], tempestPalm: ['cyclone', '#6a8aff', '#ffe14a'], destruction: ['meteor', '#c8202a', '#ffb02a'],
+  voidFist: ['voidFist', '#8a5aff', '#c8a0ff'], starfallArt: ['shootingStar', '#ffd23a', '#ffffff'], thunderMonk: ['beads', '#8a5a2e', '#ffe14a'] };
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -10716,7 +10832,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.17.0';
+const APP_VERSION = '13.18.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
