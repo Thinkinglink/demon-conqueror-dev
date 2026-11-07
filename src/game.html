@@ -4741,7 +4741,7 @@ function buildPlayerModel() {
   if (acc && acc.icon === 'helm') { look[3] = 'helm'; look[4] = acc.color; }
   if (acc && acc.icon === 'hat') { look[3] = 'tricorn'; look[4] = acc.color; }
   if (T && T.tint) { [look[0], look[1], look[2]] = T.tint; look[3] = 'none'; }
-  playerModel = makeChar(look, { cape: acc && acc.icon === 'cape' && !T ? acc.color : null, pattern: T ? 'plain' : SKIN_PAT1315[s.skin], rim: T ? null : SKIN_RIM1315[s.skin] });
+  playerModel = makeChar(look, { cape: null, pattern: T ? 'plain' : SKIN_PAT1315[s.skin], rim: T ? null : SKIN_RIM1315[s.skin] });
   playerModel.root.userData.skin = look[2];
   if (T && T.parts) addFormParts(playerModel, T);
   if (!T) dressPlayer(playerModel, sk.custom ? null : s.skin, s.race);
@@ -10040,6 +10040,62 @@ function groundDetail1321(mat, E) {
   mat.customProgramCacheKey = () => 'gd1321' + rep.toFixed(1);
   return mat;
 }
+// ================= 13.22: cloth accessories rebuilt (scarves, capes, coats, bandanas, ribbons) with fabric and flowing segments; enemy outfits by theme; bosses get armour and trims =================
+function clothChain1322(ch, parent, mat, n, w, len, thick, x, y, z, rx, ry, rz, fringe) {   // a hanging strip made of n linked segments; each one sways from the one above
+  let p = parent; const segs = [];
+  for (let i = 0; i < n; i++) { const piv = new THREE.Group(); if (i === 0) { piv.position.set(x, y, z); piv.rotation.set(rx, ry, rz); } else piv.position.y = -len; p.add(piv);
+    const m = new THREE.Mesh(GEO.blk, mat); m.scale.set(w * (1 - i * .06), len * 1.04, thick); piv.add(m); segs.push(piv); p = piv; }
+  if (fringe) for (let k = 0; k < 5; k++) { const f = new THREE.Mesh(GEO.blk, mat); f.scale.set(w * .12, len * .4, thick); f.position.set((k - 2) * w * .2, -len, 0); p.add(f); }
+  (ch.cloth1322 ||= []).push(segs); return segs;
+}
+const _accLook1322 = accLook68;
+accLook68 = function (ch) { const acc = ITEMS[GameData.state.accessory]; if (!acc || player.transform) return;
+  const kind = acc.icon, P = ch.P, H = P.head, B = ch.body, y = ch.legH || 2, c = acc.color || '#cccccc';
+  if (!['scarf', 'cape', 'coat', 'spikecoat', 'bandana', 'ribbon'].includes(kind)) return _accLook1322(ch);
+  const fab = charMat1315(c, kind === 'cape' ? 'plain' : 'plain', 'sleeve', '#ffffff'), dark = charMat1315(col1315(c, -.25), 'plain', 'sleeve', '#ffffff'), box = (par, mat, sx, sy, sz, px, py, pz, rx = 0, ry = 0, rz = 0) => { const m = new THREE.Mesh(GEO.box, mat); m.scale.set(sx, sy, sz); m.position.set(px, py, pz); m.rotation.set(rx, ry, rz); par.add(m); return m; };
+  if (kind === 'scarf') {   // two wraps around the neck, a knot, and two long fringed tails (one in front, one thrown back)
+    for (const [yy, s] of [[y + 2.05, 1.18], [y + 2.28, 1.08]]) { const t = new THREE.Mesh(GEO.torusHi, fab); t.scale.set(s * 1.9, s * 1.6, 2.6); t.rotation.x = Math.PI / 2; t.position.y = yy; B.add(t); }
+    box(B, dark, .42, .36, .3, .38, y + 2.02, .6, 0, 0, .2);
+    clothChain1322(ch, B, fab, 4, .5, .48, .12, .42, y + 1.9, .66, -.12, 0, .12, true);
+    clothChain1322(ch, B, fab, 5, .52, .5, .12, -.3, y + 2.2, -.6, .5, 0, -.15, true);
+  }
+  if (kind === 'cape') {   // five panels across the back that billow out when you run
+    box(B, dark, 2.2, .22, .3, 0, y + 2.02, -.45); for (const k of [-1, 1]) box(B, charMat1315('#d4a017', 'plain', 'skin'), .22, .22, .12, k * .8, y + 2.0, .55);
+    for (let i = 0; i < 5; i++) clothChain1322(ch, B, i % 2 ? dark : fab, 3, .46, .95, .1, -.8 + i * .4, y + 2.0, -.58, .06, 0, (i - 2) * .04);
+  }
+  if (kind === 'coat' || kind === 'spikecoat') {   // fabric torso and sleeves, a long split tail, lapels and cuffs
+    P.torso.material = fab; if (P.sleeveL) { P.sleeveL.material = P.sleeveR.material = fab; P.sleeveL.scale.y = P.sleeveR.scale.y = .92; }
+    for (const k of [-1, 1]) { box(B, dark, .5, 1.2, .12, k * .42, y + 1.5, .56, 0, 0, -k * .3); clothChain1322(ch, B, fab, 2, .95, .8, .14, k * .52, y + .05, -.02, .04, 0, k * .04); }
+    clothChain1322(ch, B, fab, 2, 1.9, .8, .14, 0, y + .05, -.5, .08, 0, 0);
+    for (const arm of [P.armL, P.armR]) { const cuff = new THREE.Mesh(GEO.blk, dark); cuff.scale.set(1.12, .14, 1.12); cuff.position.y = -.84; arm.add(cuff); }
+    for (let i = 0; i < 3; i++) box(B, charMat1315('#d4a017', 'plain', 'skin'), .14, .14, .06, .3, y + 1.55 - i * .4, .56);
+    if (kind === 'spikecoat') for (const k of [-1, 1]) for (let i = 0; i < 4; i++) { const sp = new THREE.Mesh(GEO.coneHi, charMat1315('#f0e8d4', 'plain', 'skin')); sp.scale.set(.22, .7 - i * .08, .22); sp.position.set(k * (1.05 + i * .14), y + 2.1 + i * .05, -.3 + i * .18); sp.rotation.z = -k * (1.05 + i * .1); B.add(sp); }
+  }
+  if (kind === 'bandana') { const t = new THREE.Mesh(GEO.torusHi, fab); t.scale.set(1.36, 1.36, 1.3); t.rotation.x = Math.PI / 2; t.position.y = .3; H.add(t); box(H, dark, .3, .26, .2, 0, .3, -.66);
+    clothChain1322(ch, H, fab, 3, .22, .32, .06, -.1, .26, -.7, .5, 0, .2); clothChain1322(ch, H, fab, 3, .22, .3, .06, .1, .26, -.7, .6, 0, -.25); }
+  if (kind === 'ribbon') { for (const k of [-1, 1]) { const l = new THREE.Mesh(GEO.sphereHi, fab); l.scale.set(.62, .36, .18); l.position.set(k * .34, .62, -.62); l.rotation.set(0, k * .3, k * .45); H.add(l); } box(H, dark, .22, .22, .2, 0, .62, -.64);
+    clothChain1322(ch, H, fab, 4, .18, .32, .05, -.1, .55, -.66, .4, 0, .25); clothChain1322(ch, H, fab, 4, .18, .32, .05, .1, .55, -.66, .45, 0, -.25); }
+};
+// cloth sways; it streams back when you move
+const _animateChar1322 = animateChar;
+animateChar = function (ch, t, speed, attack, swingSide, attackDur) { _animateChar1322(ch, t, speed, attack, swingSide, attackDur);
+  if (ch.cloth1322) { const s = Math.min(1, speed / 150); ch.cloth1322.forEach((segs, j) => segs.forEach((piv, i) => { if (i === 0) { piv.userData.rx ??= piv.rotation.x; piv.rotation.x = piv.userData.rx + s * (.9 + j * .05) + Math.sin(time * 2.4 + j) * .06; } else piv.rotation.x = s * .25 + Math.sin(time * 3.2 + i * .9 + j) * (.08 + s * .12); })); } };
+// enemies: clothing pattern by theme; bosses: armour plates, trims and a rim light in their colour
+const ENEMY_PAT1322 = [[/pirate|bandit|brute|buccaneer/i, 'stripes'], [/marine|admiral|guard|soldier|captain|commodore/i, 'pinstripe'], [/desert|sand|nomad/i, 'tribal'], [/snow|frozen|ice|yeti/i, 'plaid'],
+  [/jungle|monkey|gorilla|forest/i, 'camo'], [/magma|fire|lava|volcan|hell/i, 'flames'], [/sky|angel|god|holy/i, 'scales'], [/prison|convict/i, 'stripes'], [/fish|shark|sea|water|tide/i, 'scales'], [/ghost|zombie|undead|cursed/i, 'tribal']];
+const _decorateEnemy1322 = decorateEnemy;
+decorateEnemy = function (e) { const was = e.ch && e.ch.decorated; _decorateEnemy1322(e); if (was || !e.ch || !e.def) return; const d = e.def, ch = e.ch, P = ch.P, look = LOOKS[d.look] || [];
+  try { const key = d.name + ' ' + d.id + ' ' + (d.look || ''), pat = (ENEMY_PAT1322.find(([re]) => re.test(key)) || [0, null])[1], kitC = (e.kit && e.kit.color) || null, rim = d.boss ? (kitC || '#ff6a3a') : '#bcd8ff';
+    if (pat || d.boss) { const sh = look[0] || '#666666', pa = look[1] || '#333333', p2 = pat || 'plain';
+      if (P.torso && P.torso.material && P.torso.material.map) P.torso.material = charMat1315(sh, p2, 'shirt', rim);
+      if (P.sleeveL) P.sleeveL.material = P.sleeveR.material = charMat1315(sh, p2, 'sleeve', rim);
+      if (P.legL && P.legL.material && P.legL.material.map) P.legL.material = P.legR.material = charMat1315(pa, p2, 'pants', rim); }
+    if (d.boss) { const c = kitC || '#ff6a3a', legH = ch.legH || 2, B = ch.body, t = new THREE.MeshBasicMaterial({ color: c }), a = new THREE.MeshPhongMaterial({ color: '#2a2a32', shininess: 120, specular: 0xffffff });
+      const bx = (par, mat, sx, sy, sz, x, y, z) => { const m = new THREE.Mesh(GEO.box, mat); m.scale.set(sx, sy, sz); m.position.set(x, y, z); par.add(m); return m; };
+      for (const k of [-1, 1]) { bx(B, a, 1.25, .38, 1.25, k * 1.5, legH + 2.1, 0); bx(B, t, 1.27, .07, 1.27, k * 1.5, legH + 1.92, 0); }
+      bx(B, a, 1.6, 1.05, .14, 0, legH + 1.4, .56); bx(B, t, 1.62, .07, .16, 0, legH + 1.9, .57); bx(B, t, .07, 1.05, .16, 0, legH + 1.4, .58);
+      for (const sx of [-1, 1]) bx(B, t, .07, 2, .07, sx * 1.0, legH + 1, .53); }
+  } catch (_) {} };
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -10997,7 +11053,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.21.0';
+const APP_VERSION = '13.22.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
