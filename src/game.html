@@ -9516,8 +9516,8 @@ function makeFruit3D(f, skinC) {
   const mat = FRUITMAT1312[key] ||= new THREE.MeshPhysicalMaterial({ map: skinTex1312(f.id, base, pat, L[1]), roughness: A.metal ? .3 : A.rough ?? .38, metalness: Math.min(.3, A.metal || 0), clearcoat: .6, clearcoatRoughness: .25,
     flatShading: L[0] === 'crystal', transparent: f.id === 'ghost', opacity: f.id === 'ghost' ? .82 : 1,
     ...(glow ? { emissive: new THREE.Color('#ffffff'), emissiveMap: skinTex1312(f.id, base, pat, L[1], true), emissiveIntensity: .75 } : {}) });
-  if (!mat.bumpMap) { mat.bumpMap = mat.map; mat.bumpScale = .035; mat.needsUpdate = true; }   // 13.18: the pattern stands out in relief
-  const body = new THREE.Mesh(body1312(L[0]), mat); body.castShadow = true; g.add(body);
+  if (!mat.bumpMap) { mat.bumpMap = mat.map; mat.bumpScale = .065; mat.needsUpdate = true; }   // 13.18: the pattern stands out in relief
+  const body = new THREE.Mesh(sculpt1323(f, L[0]), mat); body.castShadow = true; g.add(body);   // 13.23: sculpted per fruit
   const top = L[0] === 'tall' ? 1.06 : L[0] === 'pear' ? 1.0 : L[0] === 'squat' ? .7 : L[0] === 'crystal' ? .95 : L[0] === 'cube' ? .86 : .86;
   face1318(g, body, f, base);   // 13.18: each fruit's own eyes and mouth
   const ph = (geo, c, sx, sy, sz, x, y, z, glowIt) => { const m = new THREE.Mesh(GEO[geo], glowIt ? basic(c) : new THREE.MeshPhongMaterial({ color: c, shininess: 60 })); m.scale.set(sx, sy, sz); m.position.set(x, y, z); g.add(m); return m; };
@@ -9550,10 +9550,10 @@ function fruitIconURL3D(f, skinC) {
   if (!hasGL || !f) return ''; const k = f.id + '|' + (skinC || ''); if (FICON1312[k] !== undefined) return FICON1312[k]; FICON1312[k] = '';
   try {
     if (!fiR) { fiR = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true }); fiR.setSize(192, 192); fiS = new THREE.Scene();
-      fiS.add(new THREE.HemisphereLight(0xffffff, 0x445566, .75)); const d = new THREE.DirectionalLight(0xffffff, .85); d.position.set(-3, 5, 6); fiS.add(d); const r = new THREE.DirectionalLight(0xbfe4ff, .5); r.position.set(4, 1, -4); fiS.add(r);
+      fiS.add(new THREE.HemisphereLight(0xdde8ff, 0x1a1420, .38)); const d = new THREE.DirectionalLight(0xffffff, 1.3); d.position.set(-4, 6, 5); fiS.add(d); const r = new THREE.DirectionalLight(0xbfe4ff, .9); r.position.set(5, 2, -5); fiS.add(r); const r2 = new THREE.DirectionalLight(0xffd8b0, .35); r2.position.set(3, -3, 4); fiS.add(r2);   // 13.23: moodier key, rim and bounce light
       fiC = new THREE.PerspectiveCamera(28, 1, .1, 100); }
     const m = makeFruit3D(f, skinC); m.rotation.set(.18, -.55, 0); fiS.add(m);
-    m.updateMatrixWorld(true); const box = new THREE.Box3().setFromObject(m.children[0]), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3()); c.y += .22; fiC.position.set(c.x, c.y + .1, c.z + Math.max(s.x, s.y + .7) * 2.3); fiC.lookAt(c);
+    m.updateMatrixWorld(true); const box = new THREE.Box3().setFromObject(m.children[0]), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3()); c.y += .38; fiC.position.set(c.x, c.y + .1, c.z + Math.max(s.x, s.y + .9) * 2.6); fiC.lookAt(c);
     m.traverse(o => { if (o.isSprite) o.visible = false; }); fiR.render(fiS, fiC); fiS.remove(m);
     const au = typeof SIG1316 !== 'undefined' && (SIG1316[f.id] || []).find(q => q[0] === 'aura'), out = document.createElement('canvas'); out.width = out.height = 192; const ox = out.getContext('2d');
     ox.drawImage(fiR.domElement, 0, 0);
@@ -9730,24 +9730,24 @@ function addSig1316(g, f) {
   const top = body.geometry.boundingBox.max.y, bot = body.geometry.boundingBox.min.y, rc = new THREE.Raycaster(), R = rng1312(f.id + 'sig');
   const surf = (dx, dy, dz) => { const d = new THREE.Vector3(dx, dy, dz).normalize(); rc.set(d.clone().multiplyScalar(5), d.clone().negate()); const h = rc.intersectObject(body)[0]; return h ? { p: h.point, n: h.face.normal.clone().normalize() } : { p: d.clone(), n: d }; };
   const ph = c => new THREE.MeshPhongMaterial({ color: c, shininess: 70 }), gl = (c, o = 1) => new THREE.MeshBasicMaterial({ color: c, transparent: o < 1, opacity: o, depthWrite: o >= 1 });
-  const mesh = (geo, mat, sx, sy, sz) => { const m = new THREE.Mesh(GEO[geo], mat); m.scale.set(sx, sy, sz); g.add(m); return m; };
+  let K = 1.3; const mesh = (geo, mat, sx, sy, sz) => { const m = new THREE.Mesh(GEO[geo], mat); m.scale.set(sx * K, sy * K, sz * K); g.add(m); return m; };   // 13.23: themes take over
   const along = (m, p, n, off = 0) => { m.position.copy(p).addScaledVector(n, off); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), n); return m; };
   const P = {
     crest: c => { const mat = ph(c); for (let i = 0; i < 6; i++) { const a = -.15 + i * .38, s = surf(0, Math.cos(a), -Math.sin(a)); along(mesh('coneHi', mat, .1, .55 - i * .05, .38), s.p, s.n, .18); } },
     hornsC: c => { const mat = ph(c); [-1, 1].forEach(sd => { let s = surf(sd * .55, .8, .05), p = s.p.clone(), dir = new THREE.Vector3(sd * .55, .8, -.2).normalize();
       for (let k = 0; k < 3; k++) { const w = .24 - k * .06, len = .32; const m = mesh(k === 2 ? 'coneHi' : 'cylHi', mat, w, len, w); along(m, p.clone().addScaledVector(dir, len / 2), dir); p.addScaledVector(dir, len * .85); dir.add(new THREE.Vector3(sd * .15, -.12, -.35)).normalize(); } }); },
-    wisps: (c, n = 3) => { for (let i = 0; i < n; i++) { const a = i / n * TAU + R(), w = new THREE.Group(); w.position.set(Math.cos(a) * .65, top + .05 + R() * .2, Math.sin(a) * .65); w.rotation.z = -Math.cos(a) * .5; w.rotation.x = Math.sin(a) * .5; g.add(w);
+    wisps: (c, n = 3) => { n = Math.round(n * 1.6); for (let i = 0; i < n; i++) { const a = i / n * TAU + R(), w = new THREE.Group(); w.position.set(Math.cos(a) * .65, top + .05 + R() * .2, Math.sin(a) * .65); w.rotation.z = -Math.cos(a) * .5; w.rotation.x = Math.sin(a) * .5; w.scale.setScalar(1.35); g.add(w);
       const s1 = new THREE.Mesh(GEO.sphereHi, gl(c)); s1.scale.setScalar(.32); w.add(s1); const c1 = new THREE.Mesh(GEO.coneHi, gl(c)); c1.scale.set(.3, .7, .3); c1.position.y = .4; w.add(c1); const c2 = new THREE.Mesh(GEO.coneHi, gl('#ffffff')); c2.scale.set(.14, .38, .14); c2.position.y = .2; w.add(c2); }
       g.userData.particles = c; },
     tails: (c, n = 3) => { const mat = ph(c), tip = ph('#ffffff'); for (let i = 0; i < n; i++) { const a = (i - (n - 1) / 2) * .55, t = new THREE.Group(); t.position.set(Math.sin(a) * .3, -.2, -.75); t.rotation.set(-.9, 0, a); g.add(t);
       const m = new THREE.Mesh(GEO.capsule, mat); m.scale.set(.32, 1.1, .32); m.position.y = .5; t.add(m); const tp = new THREE.Mesh(GEO.sphereHi, tip); tp.scale.setScalar(.36); tp.position.y = 1.05; t.add(tp); } },
-    crystals: (c, n = 4) => { const mat = new THREE.MeshPhongMaterial({ color: c, emissive: c, emissiveIntensity: .25, shininess: 140, flatShading: true, transparent: true, opacity: .9 });
+    crystals: (c, n = 4) => { n = Math.round(n * 1.5); const mat = new THREE.MeshPhongMaterial({ color: c, emissive: c, emissiveIntensity: .25, shininess: 140, flatShading: true, transparent: true, opacity: .9 });
       for (let i = 0; i < n; i++) { const a = i * 2.39 + R(), y = .2 + R() * .7, s = surf(Math.cos(a) * (1 - y * .5), y, Math.sin(a) * (1 - y * .5)); const k = .7 + R() * .6; along(mesh('cone4', mat, .3 * k, .75 * k, .3 * k), s.p, s.n, .25 * k); } },
-    icicles: c => { const mat = new THREE.MeshPhongMaterial({ color: c, shininess: 140, transparent: true, opacity: .9 }); for (let i = 0; i < 7; i++) { const a = i / 7 * TAU, s = surf(Math.cos(a), -.45, Math.sin(a)); const m = mesh('coneHi', mat, .14, .45 + R() * .25, .14); m.position.copy(s.p).add(new THREE.Vector3(0, -.2, 0)); m.rotation.x = Math.PI; } },
-    fur: c => { const mat = ph(c); for (let i = 0; i < 16; i++) { const a = i * 2.39, y = -.5 + (i % 4) * .3, s = surf(Math.cos(a), y, Math.sin(a)); if (s.n.z > .55 && Math.abs(s.p.y) < .45) continue; along(mesh('sphereHi', mat, .42, .3, .42), s.p, s.n, .04); } },
+    icicles: c => { const mat = new THREE.MeshPhongMaterial({ color: c, shininess: 140, transparent: true, opacity: .9 }); for (let i = 0; i < 10; i++) { const a = i / 10 * TAU, s = surf(Math.cos(a), -.45, Math.sin(a)); const m = mesh('coneHi', mat, .14, .45 + R() * .25, .14); m.position.copy(s.p).add(new THREE.Vector3(0, -.2, 0)); m.rotation.x = Math.PI; } },
+    fur: c => { const mat = ph(c); for (let i = 0; i < 30; i++) { const a = i * 2.39, y = -.65 + (i % 6) * .25, s = surf(Math.cos(a), y, Math.sin(a)); if (s.n.z > .55 && Math.abs(s.p.y) < .45) continue; along(mesh('sphereHi', mat, .42, .3, .42), s.p, s.n, .04); } },
     teeth: () => { const s = surf(0, -.38, 1), m = new THREE.Group(); m.position.copy(s.p).addScaledVector(s.n, .01); m.lookAt(s.p.clone().add(s.n)); g.add(m);
       const mouth = new THREE.Mesh(GEO.sphereHi, gl('#1a0505')); mouth.scale.set(.75, .2, .05); m.add(mouth); for (let i = 0; i < 6; i++) { const t = new THREE.Mesh(GEO.coneHi, ph('#f8f4e8')); t.scale.set(.09, .16, .06); t.position.set(-.3 + i * .12, i % 2 ? -.04 : .04, .03); t.rotation.z = i % 2 ? 0 : Math.PI; m.add(t); } },
-    drips: (c, glow) => { const mat = glow ? gl(c) : new THREE.MeshPhongMaterial({ color: c, shininess: 90, transparent: true, opacity: .92 }); for (let i = 0; i < 5; i++) { const a = i / 5 * TAU + .3, s = surf(Math.cos(a), -.6, Math.sin(a)); const m = mesh('capsule', mat, .2, .45 + R() * .3, .2); m.position.copy(s.p).add(new THREE.Vector3(0, -.15, 0)); } },
+    drips: (c, glow) => { const mat = glow ? gl(c) : new THREE.MeshPhongMaterial({ color: c, shininess: 90, transparent: true, opacity: .92 }); for (let i = 0; i < 8; i++) { const a = i / 8 * TAU + .3, s = surf(Math.cos(a), -.6, Math.sin(a)); const m = mesh('capsule', mat, .2, .45 + R() * .3, .2); m.position.copy(s.p).add(new THREE.Vector3(0, -.15, 0)); } },
     bolts: c => { const mat = gl(c); for (let k = 0; k < 3; k++) { let p = new THREE.Vector3(Math.cos(k * 2.1) * 1.15, .9, Math.sin(k * 2.1) * 1.15); for (let i = 0; i < 4; i++) { const q = p.clone().add(new THREE.Vector3((R() - .5) * .5, -.45, (R() - .5) * .5)); q.setLength(Math.max(1.1, q.length())); const d = q.clone().sub(p), m = mesh('box', mat, .07, d.length(), .07); m.position.copy(p).add(q).multiplyScalar(.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()); p = q; } } g.userData.particles = c; },
     lotus: c => { const mat = ph(c); for (let i = 0; i < 8; i++) { const a = i / 8 * TAU, m = mesh('sphereHi', mat, .5, .14, .9); m.position.set(Math.cos(a) * .75, bot + .12, Math.sin(a) * .75); m.rotation.y = -a + Math.PI / 2; m.rotation.x = -.35; } },
     fins: c => { const mat = ph(c), s = surf(0, .5, -1); along(mesh('coneHi', mat, .08, .7, .55), s.p, s.n, .25); [-1, 1].forEach(sd => { const q = surf(sd, -.1, 0); along(mesh('coneHi', mat, .06, .5, .4), q.p, q.n, .18); }); },
@@ -9758,10 +9758,10 @@ function addSig1316(g, f) {
     pinwheel: c => { const mat = ph(c); for (let i = 0; i < 4; i++) { const a = i / 4 * TAU, m = mesh('coneHi', mat, .5, 1.1, .08); m.position.set(Math.cos(a) * 1.1, 0, Math.sin(a) * 1.1); m.rotation.z = -Math.PI / 2; m.rotation.y = -a; m.rotateX(.6); } },
     leafCrown: c => { const mat = new THREE.MeshPhongMaterial({ color: c, side: THREE.DoubleSide, shininess: 40 }); for (let i = 0; i < 6; i++) { const lf = new THREE.Mesh(LEAFGEO1312, mat), a = i / 6 * TAU; lf.scale.setScalar(1.35); lf.position.set(Math.cos(a) * .2, top - .05, Math.sin(a) * .2); lf.rotation.set(0, -a, .75); g.add(lf); } },
     orbs: (c, n = 3) => { const mat = gl(c); for (let i = 0; i < n; i++) { const a = i / n * TAU, m = mesh('sphereHi', mat, .22, .22, .22); m.position.set(Math.cos(a) * 1.45, Math.sin(a * 2) * .3 + .1, Math.sin(a) * 1.45); } g.userData.particles = c; },
-    spikesBack: c => { const mat = ph(c); for (let i = 0; i < 9; i++) { const a = -.5 + i * .25, sd = i % 2 ? -.25 : .25, s = surf(sd, Math.cos(a), -Math.sin(a) - .3); along(mesh('coneHi', mat, .2, .55 + R() * .3, .2), s.p, s.n, .2); } },
+    spikesBack: c => { const mat = ph(c); for (let i = 0; i < 13; i++) { const a = -.6 + i * .2, sd = i % 2 ? -.25 : .25, s = surf(sd, Math.cos(a), -Math.sin(a) - .3); along(mesh('coneHi', mat, .2, .55 + R() * .3, .2), s.p, s.n, .2); } },
     aura: c => { if (!g.userData.particles) g.userData.particles = c; },   // 13.18: no glow halo, only the rising sparkles
   };
-  for (const [k, ...a] of parts) try { P[k] && P[k](...a); } catch (e) {}
+  for (const [k, ...a] of parts) try { K = ['coil', 'lotus', 'legs', 'pinwheel', 'orbs', 'featherWings'].includes(k) ? 1 : k === 'crystals' ? 1.1 : 1.3; P[k] && P[k](...a); } catch (e) {}
 }
 const _makeFruit3D1316 = makeFruit3D;
 makeFruit3D = function (f, skinC) { const g = _makeFruit3D1316(f, skinC); addSig1316(g, f); return g; };
@@ -10096,6 +10096,33 @@ decorateEnemy = function (e) { const was = e.ch && e.ch.decorated; _decorateEnem
       bx(B, a, 1.6, 1.05, .14, 0, legH + 1.4, .56); bx(B, t, 1.62, .07, .16, 0, legH + 1.9, .57); bx(B, t, .07, 1.05, .16, 0, legH + 1.4, .58);
       for (const sx of [-1, 1]) bx(B, t, .07, 2, .07, sx * 1.0, legH + 1, .53); }
   } catch (_) {} };
+// ================= 13.23: sculpted fruit bodies (lumps, ridges, carved grooves per fruit), bolder themes, moodier menu lighting =================
+// [lumpiness, ridge count, ridge depth, grooves]
+const SCULPT1323 = {
+  dragon: [.1, 0, 0, 2], kitsune: [.05, 5, .07, 0], yeti: [.13, 0, 0, 0], mammoth: [.1, 0, 0, 1], trex: [.09, 0, 0, 2], venom: [.11, 0, 0, 1], shadow: [.08, 7, .05, 0], dough: [.08, 0, 0, 0],
+  magma: [.11, 0, 0, 3], volcanic: [.11, 0, 0, 3], quake: [.03, 0, 0, 0], diamond: [.015, 0, 0, 0], creation: [.015, 0, 0, 0], blizzard: [.025, 0, 0, 0], absoluteZero: [.025, 0, 0, 0], light: [0, 0, 0, 0],
+  love: [.02, 0, 0, 0], buddha: [.03, 0, 0, 0], rubber: [.03, 0, 0, 0], ghost: [.05, 0, 0, 0], spike: [.05, 0, 0, 0], gravity: [.05, 0, 0, 1], portal: [.04, 0, 0, 2], pain: [.08, 6, .04, 0],
+  spirit: [.05, 4, .06, 0], phoenix: [.06, 5, .05, 0], flame: [.06, 6, .05, 0], tiger: [.07, 0, 0, 1], leviathan: [.08, 0, 0, 2], oni: [.08, 0, 0, 2], control: [.03, 8, .03, 0], sound: [.04, 8, .035, 0],
+  overgrowth: [.07, 8, .05, 0], overgrown: [.08, 8, .06, 0], vine: [.06, 6, .04, 0], storm: [.06, 0, 0, 2], lightning: [.05, 0, 0, 2], gas: [.09, 0, 0, 0], smoke: [.1, 0, 0, 0], sand: [.07, 0, 0, 0],
+};
+function sculptDefault1323(f) { return f.type === 'Beast' ? [.08, 0, 0, 1] : f.type === 'Elemental' ? [.06, 6, .03, 0] : [.06, 8, .025, 1]; }
+function sculpt1323(f, shape) {
+  const C = (window.SCU1323 ||= {}), key = f.id + '|' + shape; if (C[key]) return C[key];
+  const base = body1312(shape); if (shape === 'crystal') return C[key] = base;
+  const [lump, rn, ra, gr] = SCULPT1323[f.id] || sculptDefault1323(f), g = base.clone(), p = g.attributes.position, nrm = g.attributes.normal, v = new THREE.Vector3(), n = new THREE.Vector3(), R = rng1312(f.id + 'sculpt');
+  const waves = Array.from({ length: 5 }, () => [new THREE.Vector3(R() - .5, R() - .5, R() - .5).normalize().multiplyScalar(2.2 + R() * 3.2), R() * TAU]);
+  const grooves = [[Math.PI / 2], [Math.PI / 2 - .6, Math.PI / 2 + .6], [Math.PI / 2 - .7, Math.PI / 2, Math.PI / 2 + .7]][Math.max(0, gr - 1)] || [], gN = grooves.map(a => new THREE.Vector3(Math.cos(a), 0, -Math.sin(a)));
+  const k = shape === 'cube' ? .35 : 1;
+  for (let i = 0; i < p.count; i++) {
+    v.fromBufferAttribute(p, i); n.fromBufferAttribute(nrm, i);
+    let d = 0; for (const [w, ph] of waves) d += Math.sin(v.dot(w) + ph); d = d / waves.length * lump * 1.6;
+    const t = Math.min(1, Math.max(0, (v.y + 1) / 2)), az = Math.atan2(v.x, v.z);
+    if (rn) d += Math.cos(az * rn) * ra * Math.sin(Math.PI * t);
+    if (gr) for (const q of gN) { const dist = Math.abs(v.dot(q)); d -= .07 * Math.exp(-dist * dist / .006) * Math.sin(Math.PI * t); }
+    v.addScaledVector(n, d * k); p.setXYZ(i, v.x, v.y, v.z);
+  }
+  g.computeVertexNormals(); return C[key] = g;
+}
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -11053,7 +11080,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.22.0';
+const APP_VERSION = '13.23.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
