@@ -3204,6 +3204,23 @@ function addHat(head, style, color) {
   }
   return g;
 }
+// 13.14: avatar faces, drawn like a decal on the front of the block head (original designs)
+const FACES1314 = 6; let FACEGEO1314 = null; const FACEMAT1314 = {};
+function faceMat1314(v, hair) {
+  const k = v + '|' + (hair || ''); if (FACEMAT1314[k]) return FACEMAT1314[k];
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256; const x = cv.getContext('2d'); x.lineCap = x.lineJoin = 'round'; x.fillStyle = x.strokeStyle = '#141414';
+  const eye = (cx, cy, rx, ry) => { x.beginPath(); x.ellipse(cx, cy, rx, ry, 0, 0, TAU); x.fill(); x.fillStyle = '#fff'; x.beginPath(); x.arc(cx - rx * .3, cy - ry * .4, rx * .35, 0, TAU); x.fill(); x.fillStyle = '#141414'; };
+  const brow = (cx, cy, tilt) => { x.lineWidth = 9; x.beginPath(); x.moveTo(cx - 22, cy + tilt); x.lineTo(cx + 22, cy - tilt); x.stroke(); };
+  x.lineWidth = 9;
+  if (v === 0) { eye(92, 112, 13, 22); eye(164, 112, 13, 22); x.beginPath(); x.arc(128, 150, 42, .15 * Math.PI, .85 * Math.PI); x.stroke(); }                                  // classic smile
+  else if (v === 1) { eye(92, 112, 13, 20); eye(164, 112, 13, 20); brow(92, 78, -5); brow(164, 78, 5); x.beginPath(); x.moveTo(92, 168); x.quadraticCurveTo(128, 196, 168, 160); x.stroke(); }   // confident smirk
+  else if (v === 2) { brow(92, 92, 7); brow(164, 92, -7); eye(94, 118, 12, 14); eye(162, 118, 12, 14); x.beginPath(); x.moveTo(100, 172); x.lineTo(156, 172); x.stroke(); }                  // determined
+  else if (v === 3) { x.lineWidth = 10; x.beginPath(); x.arc(92, 118, 18, 1.1 * Math.PI, 1.9 * Math.PI); x.stroke(); x.beginPath(); x.arc(164, 118, 18, 1.1 * Math.PI, 1.9 * Math.PI); x.stroke();     // happy, eyes shut
+    x.fillStyle = '#7a1a1a'; x.beginPath(); x.moveTo(84, 150); x.quadraticCurveTo(128, 214, 172, 150); x.closePath(); x.fill(); x.fillStyle = '#fff'; x.fillRect(96, 150, 64, 12); }
+  else if (v === 4) { brow(92, 86, -7); brow(164, 86, 7); eye(92, 116, 12, 18); eye(164, 116, 12, 18); x.beginPath(); x.arc(128, 168, 22, Math.PI * 1.1, Math.PI * 1.9); x.stroke(); }          // grumpy
+  else { eye(92, 112, 12, 20); x.lineWidth = 10; x.beginPath(); x.moveTo(146, 112); x.lineTo(182, 108); x.stroke(); x.beginPath(); x.arc(128, 150, 40, .15 * Math.PI, .85 * Math.PI); x.stroke(); }  // wink
+  const t = new THREE.CanvasTexture(cv); return FACEMAT1314[k] = new THREE.MeshLambertMaterial({ map: t, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+}
 // smooth rig: capsule torso, sphere head, capsule arms and legs that pivot from the shoulder / hip, round hands and feet
 // opts: cape, scale, beast ('monkey' | 'gorilla'), crown
 function makeChar(look, opts = {}) {
@@ -3212,17 +3229,18 @@ function makeChar(look, opts = {}) {
   const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
   const P = {};
   const legH = beast === 'gorilla' ? 1.5 : 2, armL = beast ? 2.6 : 2, tw = beast === 'gorilla' ? 2.5 : 2;
-  const limb = (x, y, w, len, color) => { const g = new THREE.Mesh(GEO.limbR, phong(color)); g.scale.set(w, len, w); g.position.set(x, y, 0); body.add(g); return g; };
-  P.legL = limb(-.5, legH, .9, legH + .1, pants); P.legR = limb(.5, legH, .9, legH + .1, pants);
-  [P.legL, P.legR].forEach(l => { const f = new THREE.Mesh(GEO.sphereHi, phong(shadeHex(pants, .7))); f.scale.set(1.15, .3 / (legH + .1), 1.5); f.position.set(0, -.97, .18); l.add(f); });
-  P.torso = addR(body, 'capsule', shirt, tw, 2.35, 1.2, 0, legH + 1.02, 0);
-  P.belt = addR(body, 'cylHi', shadeHex(pants, .8), tw * .96, .22, 1.1, 0, legH + .12, 0);
-  P.armL = limb(-tw / 2 - .45, legH + 1.95, .82, armL, skin); P.armR = limb(tw / 2 + .45, legH + 1.95, .82, armL, skin);
-  [P.armL, P.armR].forEach(a => { const h = new THREE.Mesh(GEO.sphereHi, phong(skin)); h.scale.set(1.25, .55 / armL, 1.25); h.position.y = -.98; a.add(h); });
-  if (!beast) { P.sleeveL = new THREE.Mesh(GEO.limbR, phong(shirt)); P.sleeveR = new THREE.Mesh(GEO.limbR, phong(shirt)); [P.sleeveL, P.sleeveR].forEach((sl, i) => { sl.scale.set(1.12, .42, 1.12); sl.position.y = .04; (i ? P.armR : P.armL).add(sl); }); }
-  P.head = new THREE.Group(); P.head.position.set(0, legH + 2.85, beast === 'gorilla' ? .25 : 0); body.add(P.head);
-  P.neck = addR(body, 'cylHi', skin, .5, .4, .5, 0, legH + 2.28, P.head.position.z * .5);
-  P.headBox = addR(P.head, 'sphereHi', skin, 1.36, 1.3, 1.32, 0, 0, 0);
+  // 13.14: a blocky avatar rig (Roblox style): box torso, box arms and legs that pivot from the shoulder / hip, a rounded block head with a drawn face
+  GEO.blk ||= roundBox(.09, 3).translate(0, -.5, 0); GEO.headBlk ||= roundBox(.3, 4);
+  const limb = (x, y, w, len, color) => { const g = new THREE.Mesh(GEO.blk, phong(color)); g.scale.set(w, len, w); g.position.set(x, y, 0); body.add(g); return g; };
+  P.legL = limb(-.5, legH, .98, legH, pants); P.legR = limb(.5, legH, .98, legH, pants);
+  [P.legL, P.legR].forEach(l => { const f = new THREE.Mesh(GEO.blk, phong(shadeHex(pants, .55))); const k = .34 / legH; f.scale.set(1.04, k, 1.04); f.position.y = -1 + k - .005; l.add(f); });   // shoes
+  P.torso = addR(body, 'box', shirt, tw, 2, 1.04, 0, legH + 1, 0);
+  P.belt = addR(body, 'box', shadeHex(pants, .8), tw * 1.02, .2, 1.08, 0, legH + .1, 0);
+  P.armL = limb(-tw / 2 - .5, legH + 2, .96, armL, skin); P.armR = limb(tw / 2 + .5, legH + 2, .96, armL, skin);
+  if (!beast) { P.sleeveL = new THREE.Mesh(GEO.blk, phong(shirt)); P.sleeveR = new THREE.Mesh(GEO.blk, phong(shirt)); [P.sleeveL, P.sleeveR].forEach((sl, i) => { sl.scale.set(1.05, .46, 1.05); sl.position.y = .01; (i ? P.armR : P.armL).add(sl); }); }
+  P.head = new THREE.Group(); P.head.position.set(0, legH + 2.64, beast === 'gorilla' ? .25 : 0); body.add(P.head);
+  P.neck = addR(body, 'box', skin, .5, .2, .5, 0, legH + 2.04, P.head.position.z * .5);
+  P.headBox = new THREE.Mesh(GEO.headBlk, phong(skin)); P.headBox.scale.set(1.26, 1.22, 1.22); P.head.add(P.headBox);
   if (beast) {                                            // rounded beast face: brow ridge, muzzle, nostrils, glinting eyes
     addR(P.head, 'capsule', '#1e120a', .28, 1.15, .3, 0, .3, .5).rotation.z = Math.PI / 2;
     addR(P.head, 'sphereHi', beast === 'gorilla' ? '#6a4a34' : '#c8a27a', .95, .6, .6, 0, -.24, .5);
@@ -3238,21 +3256,16 @@ function makeChar(look, opts = {}) {
     add('cylHi', phong('#5a0a0a'), .04, .5, .04, .36, .3, .58).rotation.z = .6;
     if (opts.scale > 1) for (const k of [-1, 1]) add('coneHi', phong('#1a1010'), .2, .8, .2, k * .45, .75, 0).rotation.z = -k * .5;   // bosses grow horns
   } else if (beast) {} else {                                                // the classic smile face, rounded: oval eyes and a curved smile
-    addR(P.head, 'sphereHi', '#1b2430', .15, .24, .08, -.24, .12, .62); addR(P.head, 'sphereHi', '#1b2430', .15, .24, .08, .24, .12, .62);
-    const sm = new THREE.Mesh(GEO.smile, phong('#1b2430')); sm.scale.set(.3, .26, .3); sm.position.set(0, -.12, .6); sm.rotation.set(-.15, 0, Math.PI); P.head.add(sm);
+    const hk0 = [...String(shirt) + pants + skin].reduce((h, c) => h * 31 + c.charCodeAt(0) >>> 0, 7), fc = new THREE.Mesh(FACEGEO1314 ||= new THREE.PlaneGeometry(1.05, 1.05), faceMat1314(opts.face ?? hk0 % FACES1314, opts.hair)); fc.position.z = .615; P.head.add(fc); P.face = fc;
   }
   if (hat && hat !== 'none') P.hat = addHat(P.head, hat, hatColor);
   if (!beast && !opts.plain) {
     const hk = [...String(shirt) + pants + skin].reduce((h, c) => h * 31 + c.charCodeAt(0) >>> 0, 7), hairC = opts.hair || ['#2a1a10', '#5a3a1a', '#141414', '#c8a060', '#8a2a1a', '#e8e0d8', '#3a2a6a'][hk % 7];
-    for (const k of [-1, 1]) addR(P.head, 'sphereHi', skin, .24, .36, .18, k * .69, .02, 0);                                                    // ears
-    addR(P.head, 'sphereHi', shadeHex(skin, .92), .2, .18, .2, 0, -.02, .67);                                                                 // nose
-    if (!H) for (const k of [-1, 1]) addR(P.head, 'box', shadeHex(hairC, .9), .3, .07, .07, k * .25, .38, .63).rotation.z = -k * .18;          // eyebrows
-    addR(P.head, 'hemi', hairC, 1.42, .9, 1.42, 0, .08, -.06).rotation.x = -.35;                                                               // hair (back and sides)
+    addR(P.head, 'hemi', hairC, 1.42, 1, 1.42, 0, .14, -.06).rotation.x = -.3;                                                               // hair (back and sides)
     if (!hat || hat === 'none') for (let i = 0; i < 5; i++) { const a = (i - 2) * .38; addR(P.head, 'coneHi', hairC, .45, .75, .45, Math.sin(a) * .45, .62, Math.cos(a) * .2 - .05).rotation.set(-.4, 0, -a * .9); }   // spiky top
-    const col = addR(body, 'torusHi', shadeHex(shirt, .8), 1.25, 1.25, 1.4, 0, legH + 2.2, 0); col.rotation.x = Math.PI / 2;                    // collar
-    for (let i = 0; i < 3; i++) addR(body, 'sphereHi', shadeHex(shirt, .6), .14, .14, .08, 0, legH + 1.85 - i * .45, .6);                     // buttons
-    addR(body, 'box', '#d4a017', .45, .32, .1, 0, legH + .12, .56);                                                                             // belt buckle
-    for (const L of [P.legL, P.legR]) { const c = new THREE.Mesh(GEO.cylHi, phong(shadeHex(pants, .75))); c.scale.set(1.12, .12 / L.scale.y, 1.12); c.position.y = -.82; L.add(c); }   // trouser cuffs
+    addR(body, 'box', shadeHex(shirt, .78), .9, .5, .08, 0, legH + 1.8, .51).rotation.z = Math.PI / 4;                                      // collar notch
+    for (let i = 0; i < 3; i++) addR(body, 'box', shadeHex(shirt, .6), .14, .14, .06, 0, legH + 1.45 - i * .42, .53);                        // buttons
+    addR(body, 'box', '#d4a017', .45, .3, .08, 0, legH + .1, .55);                                                                              // belt buckle
   }
   if (opts.crown) { const c = new THREE.Group(); P.head.add(c); c.position.y = .6; const ring = new THREE.Mesh(new THREE.CylinderGeometry(.72, .72, .4, 32, 1, true), new THREE.MeshPhongMaterial({ color: 0xe9b949, shininess: 80, side: THREE.DoubleSide })); c.add(ring); for (let i = 0; i < 8; i++) { const a = i / 8 * TAU; addR(c, 'coneHi', '#ffd166', .2, .42, .2, Math.cos(a) * .66, .38, Math.sin(a) * .66); } addR(c, 'sphereHi', '#c8102e', .22, .22, .12, 0, 0, .72); }
   if (opts.cape) { P.cape = addR(body, 'capsule', opts.cape, tw * 1.05, 3.1, .16, 0, legH + .75, -.66); P.cape.rotation.x = .08; }
@@ -3267,13 +3280,14 @@ function setFlash(ch, on) {
 }
 // blocky walk: legs pivot at the hips, arms swing opposite; attacks chop the RIGHT arm down in a rigid arc
 function animateChar(ch, t, speed, attack, swingSide, attackDur = .25) {
-  const s = Math.min(1, speed / 150), a = Math.sin(t * 11) * .8 * s;
+  const s = Math.min(1, speed / 150), a = Math.sin(t * 10) * 1.0 * s;
   const idle = 1 - s, ph = ch.phase ?? (ch.phase = Math.random() * 6), br = Math.sin(time * 2.2 + ph);      // idle: breathe, sway the hips, shoulders rise and fall
   ch.hunch ??= ch.body.rotation.x;
-  ch.body.position.y = br * .07 * idle + Math.abs(Math.sin(t * 11)) * .18 * s; ch.body.rotation.y = Math.sin(time * 1.1 + ph) * .05 * idle; ch.body.rotation.x = ch.hunch + .14 * s;   // run: lean in, bounce
+  ch.body.position.y = br * .03 * idle + Math.abs(Math.sin(t * 10)) * .06 * s; ch.body.rotation.y = Math.sin(time * 1.1 + ph) * .03 * idle; ch.body.rotation.x = ch.hunch + .04 * s;   // avatar walk: upright, stiff limbs, barely any bounce
   ch.P.legL.rotation.x = a; ch.P.legR.rotation.x = -a;
-  ch.P.armL.rotation.x = -a * .8 - .18 * idle; ch.P.armR.rotation.x = a * .8 - .18 * idle;
-  ch.P.armL.rotation.z = -(.1 + br * .05) * idle; ch.P.armR.rotation.z = (.1 + br * .05) * idle;
+  ch.P.armL.rotation.x = -a - br * .06 * idle; ch.P.armR.rotation.x = a + br * .06 * idle;
+  ch.P.armL.rotation.z = -(.04 + br * .02) * idle; ch.P.armR.rotation.z = (.04 + br * .02) * idle;
+  if (ch === playerModel && typeof player !== 'undefined' && !player.grounded && !player.flight) { ch.P.armL.rotation.x = ch.P.armR.rotation.x = -2.9; ch.P.armL.rotation.z = -.12; ch.P.armR.rotation.z = .12; ch.P.legL.rotation.x = .25; ch.P.legR.rotation.x = -.15; }   // jump: both arms straight up
   if (ch.P.head) { ch.P.head.rotation.x = br * .03 * idle; ch.P.head.rotation.y = Math.sin(time * .45 + ph * 2) * .45 * idle * (Math.sin(time * .17 + ph) > .3 ? 1 : .2); }   // idle: look around now and then
   if (attack > 0) { const p = 1 - Math.min(1, attack / attackDur); ch.P.armR.rotation.x = -2.9 + 2.5 * p; ch.P.armR.rotation.z = .25 * (1 - p); ch.P.armL.rotation.x = -.9; ch.body.rotation.y += (.5 - p) * .7; ch.P.legL.rotation.x = -.35; ch.P.legR.rotation.x = .25; }   // swing: twist the torso, guard with the left arm, plant the feet   // overhead → forward-down
   if (ch.P.tail) ch.P.tail.rotation.y = Math.sin(t * 6) * .4;
@@ -7589,22 +7603,22 @@ function makePartKit(ch, c1, c2, boss) { const P = ch.P, H = P.head, B = ch.body
     bandana: () => { headgear(); add(H, 'hemi', M(c1), 1.42, 1.1, 1.42, 0, .1, 0); add(H, 'coneHi', M(c1), .2, .6, .2, 0, .1, -.75, 1.9); },
     mask: () => add(H, 'box', M('#1a1a1a'), 1.1, .45, .25, 0, -.25, .55),
     dagger: () => held(g => { add(g, 'box', metal, .12, 1.6, .3, 0, -1.2, 0); add(g, 'box', M('#5a3a1a'), .25, .6, .25, 0, -.2, 0); }),
-    belt: () => { add(B, 'cylHi', M('#3a2412'), 2.1, .3, 1.25, 0, legH + .2, 0); add(B, 'box', gold, .5, .4, .12, 0, legH + .2, .63); },
+    belt: () => { add(B, 'box', M('#3a2412'), 2.08, .3, 1.1, 0, legH + .2, 0); add(B, 'box', gold, .5, .4, .12, 0, legH + .2, .58); },
     tricorn: () => { headgear(); add(H, 'cylHi', M('#1a1a1a'), 2.2, .2, 2.2, 0, .55, 0); add(H, 'coneHi', M('#1a1a1a'), 1.4, .8, 1.4, 0, .95, 0); add(H, 'sphereHi', bone, .35, .3, .1, 0, .9, .62); },
     eyepatch: () => { add(H, 'sphereHi', dark, .32, .3, .1, -.26, .14, .62); add(H, 'torusHi', dark, 1.35, 1.35, .3, 0, .2, 0, Math.PI / 2, 0, .3); },
     hook: () => onArm(P.armL, 'torusHi', metal, .9, .9, .9, -1.2),
     coat: () => { add(B, 'capsule', M(c3), 2.25, 2.6, 1.3, 0, legH + .75, -.05); add(B, 'box', gold, .12, 2.2, .1, -.35, legH + 1, .66); add(B, 'box', gold, .12, 2.2, .1, .35, legH + 1, .66); },
     beard: () => add(H, 'coneHi', M(shadeHex(c2, .5)), .8, .8, .5, 0, -.65, .4, Math.PI),
     cap: () => { headgear(); add(H, 'cylHi', M('#f4f4f4'), 1.5, .5, 1.5, 0, .55, 0); add(H, 'box', M('#1a2a5a'), 1.1, .1, .7, 0, .35, .6); add(H, 'sphereHi', gold, .3, .3, .1, 0, .6, .76); },
-    epaulets: () => { for (const k of [-1, 1]) { add(B, 'cylHi', gold, 1, .2, 1, k * 1.4, legH + 2.15, 0); for (let i = 0; i < 5; i++) add(B, 'cylHi', gold, .08, .4, .08, k * 1.4 + (i - 2) * .18, legH + 1.95, .3); } },
+    epaulets: () => { for (const k of [-1, 1]) { add(B, 'box', gold, 1.1, .2, 1.1, k * 1.5, legH + 2.08, 0); for (let i = 0; i < 5; i++) add(B, 'cylHi', gold, .08, .4, .08, k * 1.4 + (i - 2) * .18, legH + 1.95, .3); } },
     sword: () => held(g => { add(g, 'box', phong('#cfd8dc'), .16, 3.8, .45, 0, -2.4, 0); add(g, 'box', gold, .9, .18, .3, 0, -.45, 0); add(g, 'cylHi', M('#3a2412'), .25, .7, .25, 0, 0, 0); }),
-    furCollar: () => add(B, 'torusHi', M('#6a4a2a'), 2.6, 2.6, 2.2, 0, legH + 2.2, 0, Math.PI / 2),
-    bracers: () => [P.armL, P.armR].forEach(a => onArm(a, 'cylHi', M('#5a3a1a'), 1, .7, 1, -.65)),
+    furCollar: () => add(B, 'torusHi', M('#6a4a2a'), 2.6, 2.6, 2.2, 0, legH + 2.02, 0, Math.PI / 2),
+    bracers: () => [P.armL, P.armR].forEach(a => onArm(a, 'box', M('#5a3a1a'), 1.04, .6, 1.04, -.62)),
     club: () => held(g => { add(g, 'cylHi', M('#6a4214'), .35, 2.6, .35, 0, -1.4, 0); add(g, 'sphereHi', M('#5a3a10'), 1, 1.3, 1, 0, -2.8, 0); }),
     furHood: () => { headgear(); add(H, 'hemi', M('#e8f0f4'), 1.6, 1.4, 1.6, 0, .05, -.05); add(H, 'torusHi', M('#ffffff'), 1.45, 1.45, .7, 0, 0, .25); },
     iceSpikes: () => { for (let i = 0; i < 5; i++) add(B, 'coneHi', M('#bfefff'), .35, 1.3, .35, -1 + i * .5, legH + 2.4, -.5, -.6); },
     iceFists: () => [P.armL, P.armR].forEach(a => onArm(a, 'ico', new THREE.MeshPhongMaterial({ color: '#bfefff', transparent: true, opacity: .85, shininess: 120 }), 1.7, 1.7, 1.7, -1)),
-    scarf: () => { add(B, 'torusHi', M(c1), 1.6, 1.6, 1.8, 0, legH + 2.3, 0, Math.PI / 2); add(B, 'box', M(c1), .45, 1.4, .15, .4, legH + 1.6, -.65, .2); },
+    scarf: () => { add(B, 'torusHi', M(c1), 1.6, 1.6, 1.8, 0, legH + 2.05, 0, Math.PI / 2); add(B, 'box', M(c1), .45, 1.4, .15, .4, legH + 1.6, -.65, .2); },
     turban: () => { headgear(); add(H, 'sphereHi', M('#f4ecd8'), 1.6, .9, 1.6, 0, .5, 0); add(H, 'sphereHi', M(c1), .3, .3, .3, 0, .55, .78); },
     scimitar: () => held(g => { const b = add(g, 'torusHi', phong('#cfd8dc'), 3, 3, 1.5, -1.2, -2.2, 0, 0, Math.PI / 2, 0); b.scale.z = .6; add(g, 'cylHi', gold, .25, .7, .25, 0, 0, 0); }),
     stripes: () => { for (let i = 0; i < 4; i++) add(B, 'cylHi', M('#1a1a1a'), 2.08, .15, 1.24, 0, legH + .5 + i * .45, 0); },
@@ -7644,12 +7658,12 @@ function makePartKit(ch, c1, c2, boss) { const P = ch.P, H = P.head, B = ch.body
     spikes: () => { for (let i = 0; i < 4; i++) add(B, 'coneHi', M(c1), .35, 1, .35, 0, legH + 1 + i * .5, -.75, -1); },
     vest: () => { for (const k of [-1, 1]) add(B, 'box', M(c3), .75, 2.1, .2, k * .62, legH + 1.1, .58, 0, 0, k * .08); },
     suit: () => { for (const k of [-1, 1]) add(B, 'box', M(c3), .5, 1.2, .1, k * .42, legH + 1.7, .62, 0, 0, -k * .35); add(B, 'box', M('#f4f4f4'), .5, 1.1, .08, 0, legH + 1.6, .6); add(B, 'box', M(c2), .2, .9, .1, 0, legH + 1.45, .66); },
-    bowtie: () => { for (const k of [-1, 1]) add(B, 'coneHi', M('#1a1a1a'), .3, .4, .2, k * .2, legH + 2.15, .62, 0, 0, k * Math.PI / 2); },
+    bowtie: () => { for (const k of [-1, 1]) add(B, 'coneHi', M('#1a1a1a'), .3, .4, .2, k * .2, legH + 1.9, .58, 0, 0, k * Math.PI / 2); },
     goldChain: () => { const t = add(B, 'torusHi', gold, 1.5, 1.9, 1, 0, legH + 1.9, .35, Math.PI / 2.4); t.scale.z = .6; add(B, 'sphereHi', gold, .4, .4, .2, 0, legH + 1.25, .66); },
     puffer: () => { for (let i = 0; i < 3; i++) add(B, 'torusHi', M(c1), 2.3, 1.6, 1.6, 0, legH + .6 + i * .6, 0, Math.PI / 2); },
-    cloak: () => { const cp = add(B, 'capsule', M(c3), 2.5, 3.4, .2, 0, legH + .7, -.7); cp.rotation.x = .12; add(B, 'torusHi', M(c3), 1.7, 1.7, 1.2, 0, legH + 2.25, 0, Math.PI / 2); },
+    cloak: () => { const cp = add(B, 'capsule', M(c3), 2.5, 3.4, .2, 0, legH + .7, -.7); cp.rotation.x = .12; add(B, 'torusHi', M(c3), 1.7, 1.7, 1.2, 0, legH + 2.04, 0, Math.PI / 2); },
     goggles: () => { for (const k of [-1, 1]) { add(H, 'cylHi', metal, .42, .2, .42, k * .26, .38, .58, Math.PI / 2); add(H, 'cylHi', glow('#7adfff'), .32, .21, .32, k * .26, .38, .6, Math.PI / 2); } add(H, 'torusHi', dark, 1.38, 1.38, .3, 0, .38, 0, Math.PI / 2); },
-    gloves: () => [P.armL, P.armR].forEach(a => { const m = new THREE.Mesh(GEO.sphereHi, M(c2)); m.scale.set(1.45 / a.scale.x, .65 / a.scale.y, 1.45 / a.scale.z); m.position.y = -.98; a.add(m); }),
+    gloves: () => [P.armL, P.armR].forEach(a => { const m = new THREE.Mesh(GEO.blk || GEO.limb, M(c2)); m.scale.set(1.07, .3, 1.07); m.position.y = -.695; a.add(m); }),
     sash: () => { const t = add(B, 'box', M(c1), .45, 2.8, .14, 0, legH + 1.2, .6); t.rotation.z = .6; },
     backSword: () => { const g = new THREE.Group(); add(g, 'box', phong('#cfd8dc'), .16, 3.6, .45, 0, 0, 0); add(g, 'box', gold, .9, .18, .3, 0, -1.9, 0); g.position.set(.2, legH + 1.6, -.75); g.rotation.z = .7; B.add(g); },
     floatFruit: () => { const g = new THREE.Group(); add(g, 'sphereHi', M('#a040ff'), .9, .9, .9, 0, 0, 0); add(g, 'coneHi', M('#2f8a3a'), .3, .4, .3, 0, .55, 0); g.position.set(1.6, legH + 3.6, .4); B.add(g); ch.float = g; },
@@ -10543,7 +10557,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.13.0';
+const APP_VERSION = '13.14.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
