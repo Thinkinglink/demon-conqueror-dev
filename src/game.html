@@ -10290,7 +10290,7 @@ function formExtras1328(form, m) {
     add(root, 'box', armour, w * .7, h * .06, S.z * .5, C.x, top - h * .1, C.z); spine(7, blue, w * .06, h * .22, .3, -.35);
     for (const k of [-1, 1]) for (let i = 0; i < 2; i++) add(root, 'coneHi', blue, w * .05, h * .16, w * .05, C.x + k * w * .5, C.y + h * (.15 - i * .12), C.z + S.z * (.15 - i * .25), 0, 0, -k * 1.2);
     legs.forEach(L => add(L, 'box', armour, w * .2, h * .18, w * .2, 0, -h * .2, 0)); if (head) for (const k of [-1, 1]) add(head, 'sphereHi', gl('#ff2a1a'), .18, .18, .1, k * .35, .2, .6); }
-  if (form === 'trex') { const bone = ph('#e8c84a', 40), brown = ph('#6a4a3a', 30);
+  if (form === 'trex' && m.geo !== 'ArmoredRex') { const bone = ph('#e8c84a', 40), brown = ph('#6a4a3a', 30);
     if (head) { add(head, 'box', bone, 1.25, .6, 1.2, 0, .35, .2); for (let i = 0; i < 7; i++) add(head, 'coneHi', ph('#f8f4e8'), .1, .3, .1, -.45 + i * .15, -.15, .78, Math.PI); for (const k of [-1, 1]) add(head, 'coneHi', bone, .2, .6, .2, k * .45, .75, 0, 0, 0, -k * .4); }
     spine(9, bone, w * .07, h * .2, .35, -.6); for (const k of [-1, 1]) add(root, 'box', brown, w * .1, h * .25, S.z * .3, C.x + k * w * .4, C.y, C.z); }
   if (form === 'yeti' && TRANSFORMS.yeti.geo === 'FrostTitan') { const chain = ph('#4a4a52', 100); arms.forEach(A => { for (let i = 0; i < 3; i++) add(A, 'torusHi', chain, 1.15, 1.15, 1.5, 0, -2.0 - i * .22, 0, Math.PI / 2 + (i % 2) * .6); }); }
@@ -10307,9 +10307,10 @@ function formExtras1328(form, m) {
   if (form === 'phoenix') { const f1 = gl('#3fc6ff', .75), f2 = gl('#bff4ff', .85), gold = gl('#ffc83a');
     (m.wings || []).forEach(W => { const sd = Math.sign(W.position.x) || 1; for (let i = 0; i < 6; i++) { const b = add(W, 'coneHi', i % 2 ? f2 : f1, w * .05, h * (.5 - i * .05), w * .02, sd * w * (.12 + i * .08), -h * .05 * i, 0, 0, 0, -sd * (1.2 + i * .12)); b.renderOrder = 2; } });
     const hd = head || root; for (let i = 0; i < 5; i++) add(hd, 'coneHi', gold, .14, .55, .14, (i - 2) * .16, head ? .55 : top, head ? -.1 : C.z, 0, 0, (i - 2) * .3); X.trail = '#ffc83a'; }
-  if (form === 'kitsune' || m.kind === 'fox') { add(root, 'torusHi', ph('#c8202a', 40), w * .62, w * .62, w * .5, C.x, C.y + h * .12, C.z, Math.PI / 2 - .2);
+  if (form === 'gas') gasDemons1331(m);
+  if (form === 'kitsune' || m.kind === 'fox') { if (m.geo !== 'SpiritFox') add(root, 'torusHi', ph('#c8202a', 40), w * .62, w * .62, w * .5, C.x, C.y + h * .12, C.z, Math.PI / 2 - .2);
     (m.tails || []).forEach(t => { const g = new THREE.Mesh(GEO.sphereHi, gl('#7af0ff')); g.scale.setScalar(.7); g.position.y = 2.4; t.add(g); });
-    const ring = new THREE.Group(); ring.position.set(C.x, C.y + h * .7, C.z); ring.scale.setScalar(1.9); root.add(ring); X.spin = ring;   // spirit demons: little blue ghosts with gaping mouths circling the fox
+    const ring = new THREE.Group(); ring.position.set(C.x, C.y + h * .7, C.z); ring.scale.setScalar(m.geo === 'SpiritFox' ? .75 : 1.9); root.add(ring); X.spin = ring;   // spirit demons: little blue ghosts with gaping mouths circling the fox
     for (let i = 0; i < 8; i++) { const a = i / 8 * TAU, d = new THREE.Group(); d.position.set(Math.cos(a) * w * 1.1, Math.sin(a * 3) * h * .15, Math.sin(a) * w * 1.1); ring.add(d); add(d, 'sphereHi', gl('#2a4aff', .85), w * .14, w * .16, w * .14, 0, 0, 0);
       add(d, 'sphereHi', gl('#ffffff'), w * .03, w * .045, .02, -w * .035, w * .03, w * .065); add(d, 'sphereHi', gl('#ffffff'), w * .03, w * .045, .02, w * .035, w * .03, w * .065); add(d, 'sphereHi', gl('#0a0a1a'), w * .05, w * .06, .02, 0, -w * .035, w * .068); } }
   if (m.kind === 'wyvern') { const armour = ph('#16161c', 120), lava = gl('#ff7a1a');
@@ -10337,7 +10338,7 @@ function prim1329(mesh, toA) {   // describe one mesh as a distance-field primit
   const sx = Math.hypot(e[0], e[1], e[2]), sy = Math.hypot(e[4], e[5], e[6]), sz = Math.hypot(e[8], e[9], e[10]), sc = Math.min(sx, sy, sz);
   const wb = bb.clone().applyMatrix4(M), cw = wb.getCenter(new THREE.Vector3()), R = wb.getSize(new THREE.Vector3()).length() / 2, minDim = Math.min(h.x * sx, h.y * sy, h.z * sz) * 2;
   const P = { kind, mesh, inv, ie: inv.elements, sc, c, h, cw, R, minDim, wb, col: mesh.userData.col1329 ? new THREE.Color(mesh.userData.col1329) : mat.color.clone() };
-  if (kind === 'cyl') { const pr = g.parameters || {}; P.r1 = pr.radiusTop ?? h.x; P.r2 = pr.radiusBottom ?? h.x; P.hh = (pr.height ?? h.y * 2) / 2; }
+  if (kind === 'cyl') { const pr = g.parameters || {}; if (/Cone/.test(t)) { P.r1 = 0; P.r2 = pr.radius ?? h.x; } else { P.r1 = pr.radiusTop ?? h.x; P.r2 = pr.radiusBottom ?? h.x; } P.hh = (pr.height ?? h.y * 2) / 2; }   // cones come to a point
   if (kind === 'tor') { const pr = g.parameters || {}; P.R0 = pr.radius ?? .5; P.r0 = pr.tube ?? .12; }
   if (kind === 'rad') P.rad = mesh.userData.radial1329;
   return P;
@@ -10434,6 +10435,41 @@ function fuseForm1329(m) {
     ['coneHi', -.6, .75, -.15, .24, 1.0, .24, 'on', '#b08a5a', -.6], ['coneHi', .6, .75, -.15, .24, 1.0, .24, 'on', '#b08a5a', -.6],
     ...arm(-1), ...arm(1), ...leg(-1), ...leg(1)];
   Object.assign(TRANSFORMS.yeti, { geo: 'FrostTitan' }); }
+// ================= 13.31: detailed Kitsune spirit fox, armoured upright T-Rex, and a swarm of smog demons around the Gas form (original designs) =================
+{ const PU = '#3a1a6a', PU2 = '#4a2a8a', PUD = '#24104a', CY = '#5ad8f0', CYP = '#bff8ff', GL = '!#5af0ff', RED = '#c8202a', CLAW = '!#eef6ff';
+  const tails = []; for (let t = 0; t < 9; t++) { const a = (t - 4) * .3, up = .55 + Math.abs(t - 4) * .04; for (let k = 0; k < 4; k++) { const d = .9 + k * 1.0;
+    tails.push(['sphereHi', Math.sin(a) * d * .9, 3.4 + up * d * .9, -2.5 - Math.cos(a) * d * .55, 1.0 + (k === 2 ? .25 : 0), 1.0 + (k === 2 ? .2 : 0), 1.35, '', k === 3 ? CYP : k === 2 ? CY : t % 2 ? PU : PU2]); } }
+  const leg = (x, z) => [['cylHi', x, 2.4, z, .72, 2.1, .72, 'leg', PU], ['sphereHi', 0, -1.45, 0, .8, 1.35, .8, 'on', CY], ['sphereHi', 0, -2.15, .2, .9, .42, 1.05, 'on', CY], ...[-.25, 0, .25].map(cx => ['coneHi', cx, -2.25, .72, .1, .3, .1, 'on', CLAW, 1.5708])];
+  BEAST_GEO.SpiritFox = [
+    ['sphereHi', 0, 3.0, 0, 1.65, 1.5, 3.1, '', PU], ['sphereHi', 0, 2.85, 1.25, 1.45, 1.45, 1.25, '', PU2], ['sphereHi', 0, 3.6, 1.6, 1.3, 1.1, 1.0, '', PUD],
+    ...[0, 1, 2, 3, 4].map(i => ['coneHi', 0, 3.85 - i * .05, 1.2 - i * .7, .32, .8, .5, '', PUD, -.6]),
+    ['torusHi', 0, 3.1, .5, 2.3, 2.3, 1.6, '', RED], ['torusHi', 0, 3.1, -.3, 2.2, 2.2, 1.4, '', '#a8102a'], ['coneHi', -.9, 2.1, .5, .18, .7, .18, '', RED, Math.PI], ['coneHi', .9, 2.1, -.3, .18, .7, .18, '', RED, Math.PI],
+    ...[-1, 1].flatMap(k => [['box', k * .82, 3.2, .8, .05, .08, 1.1, '', GL], ['box', k * .8, 2.9, -.6, .05, .08, .9, '', GL]]), ...tails,
+    ['sphereHi', 0, 4.25, 2.7, 1.1, 1.0, 1.2, 'head', PU], ['sphereHi', 0, -.25, .92, .62, .5, 1.05, 'on', PU2], ['sphereHi', 0, -.2, 1.48, .22, .16, .16, 'on', '#0a0a14'],
+    ['sphereHi', -.55, -.3, .2, .5, .5, .5, 'on', CY], ['sphereHi', .55, -.3, .2, .5, .5, .5, 'on', CY], ['coneHi', -.45, .85, -.1, .38, .95, .26, 'on', PU, 0], ['coneHi', .45, .85, -.1, .38, .95, .26, 'on', PU, 0],
+    ['coneHi', -.45, .8, .02, .2, .6, .1, 'on', GL], ['coneHi', .45, .8, .02, .2, .6, .1, 'on', GL], ['sphereHi', -.32, .15, .82, .16, .1, .08, 'on', '!#ff2a2a'], ['sphereHi', .32, .15, .82, .16, .1, .08, 'on', '!#ff2a2a'],
+    ['box', 0, .45, .7, .5, .05, .05, 'on', GL], ...leg(-.78, 1.6), ...leg(.78, 1.6), ...leg(-.78, -1.5), ...leg(.78, -1.5)];
+  const GR = '#3a9a2a', GR2 = '#5ab83a', GRD = '#22501a', BONE = '#e8c84a', ARM = '#8a4a3a', TOOTH = '!#f8f4e8';
+  const rexLeg = x => [['sphereHi', x, 4.1, -.3, 1.25, 1.9, 1.5, 'leg', GR], ['box', 0, -.4, 0, 1.0, 1.0, 1.3, 'on', ARM], ['coneHi', x > 0 ? .55 : -.55, -.2, 0, .18, .55, .18, 'on', BONE, 0], ['sphereHi', 0, -2.2, .3, .85, 1.5, .85, 'on', GRD], ['sphereHi', 0, -3.3, .7, 1.05, .42, 1.6, 'on', GRD], ...[-.3, 0, .3].map(cx => ['coneHi', cx, -3.35, 1.5, .12, .4, .12, 'on', BONE, 1.5708])];
+  BEAST_GEO.ArmoredRex = [
+    ['sphereHi', 0, 4.7, 0, 1.9, 2.0, 3.1, '', GR, -.25], ['sphereHi', 0, 4.25, .6, 1.4, 1.5, 2.1, '', GR2], ['sphereHi', 0, 5.7, 1.9, 1.15, 1.25, 1.5, '', GR, -.5],
+    ...[-1, 1].flatMap(k => [['box', k * 1.0, 4.7, .2, .2, 1.4, 2.2, '', ARM], ['box', k * 1.05, 4.0, -.6, .2, .9, 1.4, '', ARM]]), ['box', 0, 5.8, -.4, 1.3, .25, 2.0, '', ARM],
+    ...[0, 1, 2, 3, 4, 5].map(i => ['coneHi', 0, 6.35 - i * .3, 2.1 - i * .75, .36, .9 - i * .06, .36, '', BONE, -.4]),
+    ['sphereHi', 0, 6.5, 2.9, 1.35, 1.2, 1.75, 'head', GR], ['sphereHi', 0, .35, .15, 1.5, .8, 1.85, 'on', BONE], ['coneHi', 0, .95, .35, .36, .85, .36, 'on', BONE, -.3], ['coneHi', -.55, .8, -.3, .2, .6, .2, 'on', BONE, -.8], ['coneHi', .55, .8, -.3, .2, .6, .2, 'on', BONE, -.8],
+    ['sphereHi', 0, -.5, .65, 1.05, .4, 1.35, 'on', GRD], ...Array.from({ length: 8 }, (_, i) => ['coneHi', -.42 + i * .12, -.2, 1.3, .07, .26, .07, 'on', TOOTH, Math.PI]),
+    ['sphereHi', -.42, .25, .95, .16, .12, .1, 'on', '!#ff2a2a'], ['sphereHi', .42, .25, .95, .16, .12, .1, 'on', '!#ff2a2a'],
+    ['capsule', -.85, 4.9, 1.7, .35, 1.0, .35, 'arm', GR], ['coneHi', 0, -1.1, .2, .1, .3, .1, 'on', BONE, 2.6], ['capsule', .85, 4.9, 1.7, .35, 1.0, .35, 'arm', GR], ['coneHi', 0, -1.1, .2, .1, .3, .1, 'on', BONE, 2.6],
+    ...rexLeg(-1.1), ...rexLeg(1.1),
+    ['sphereHi', 0, 4.5, -2.7, 1.35, 1.25, 2.3, 'tail', GR], ['box', 0, .55, 0, .9, .22, 1.6, 'on', ARM], ['coneHi', 0, .85, 0, .3, .6, .3, 'on', BONE, -.3],
+    ['sphereHi', 0, -.15, -1.9, .95, .9, 1.9, 'tail', GR], ['box', 0, .45, 0, .7, .18, 1.3, 'on', ARM], ['coneHi', 0, .7, 0, .24, .5, .24, 'on', BONE, -.3],
+    ['sphereHi', 0, -.1, -1.6, .62, .6, 1.6, 'tail', GR2], ['coneHi', 0, .45, 0, .18, .4, .18, 'on', BONE, -.3], ['sphereHi', 0, -.05, -1.3, .36, .36, 1.2, 'tail', GR2]];
+  Object.assign(TRANSFORMS.kitsune, { model: 'beast', geo: 'SpiritFox' }); Object.assign(TRANSFORMS.trex, { geo: 'ArmoredRex' }); }
+// the Gas form: a swarm of little screaming smog demons and drifting purple smoke
+function gasDemons1331(m) { const ring = new THREE.Group(); ring.position.y = 4.2; m.root.add(ring); const body = new THREE.MeshBasicMaterial({ color: '#2a3aaa', transparent: true, opacity: .9 }), dark = new THREE.MeshBasicMaterial({ color: '#141a5a' }), white = new THREE.MeshBasicMaterial({ color: '#ffffff' }), mouth = new THREE.MeshBasicMaterial({ color: '#0a0a1a' });
+  for (let i = 0; i < 16; i++) { const a = i / 16 * TAU, r = 3.4 + (i % 3) * .9, d = new THREE.Group(); d.position.set(Math.cos(a) * r, Math.sin(i * 1.7) * 1.6, Math.sin(a) * r); d.lookAt(0, d.position.y, 0); d.rotateY(Math.PI); ring.add(d);
+    const add = (mat, sx, sy, sz, x, y, z) => { const o = new THREE.Mesh(GEO.sphereHi, mat); o.scale.set(sx, sy, sz); o.position.set(x, y, z); d.add(o); return o; };
+    add(body, .9, .95, .85, 0, 0, 0); add(dark, .5, .4, .4, -.25, .35, -.2); add(dark, .45, .4, .4, .3, -.3, -.25); add(white, .2, .26, .05, -.2, .18, .42); add(white, .2, .26, .05, .2, .18, .42); add(mouth, .36, .4, .05, 0, -.18, .43); add(white, .3, .06, .04, 0, -.02, .45); }
+  (m.extra1328 ||= {}).spin = ring; m.extra1328.drip = '#b05aff'; }
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -11391,7 +11427,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.30.0';
+const APP_VERSION = '13.31.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
