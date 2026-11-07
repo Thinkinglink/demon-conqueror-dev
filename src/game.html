@@ -10272,6 +10272,60 @@ makeFruit3D = function (f, skinC) { const g = _makeFruit3D1327(f, skinC); if (!s
   if (parts) { SIG1316.__skin1327 = parts; try { addSig1316(g, { id: '__skin1327', type: f.type }); } finally { delete SIG1316.__skin1327; } }
   if (th === 'celestial') { const h = new THREE.Mesh(GEO.torusHi, new THREE.MeshBasicMaterial({ color: '#ffe08a' })); h.scale.setScalar(1.2); h.position.set(0, 1.25, -.4); h.rotation.x = -.3; g.add(h); }
   return g; };
+// ================= 13.28: transformations reworked. Armour, crystals, masks, chains, flame feathers, spirit demons and more on every beast form (original designs) =================
+function formExtras1328(form, m) {
+  const ph = (c, sh = 60) => new THREE.MeshPhongMaterial({ color: c, shininess: sh }), gl = (c, o = 1) => new THREE.MeshBasicMaterial({ color: c, transparent: o < 1, opacity: o, depthWrite: o >= 1 });
+  const add = (par, geo, mat, sx, sy, sz, x, y, z, rx = 0, ry = 0, rz = 0) => { const o = new THREE.Mesh(GEO[geo], mat); o.scale.set(sx, sy, sz); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); par.add(o); return o; };
+  const X = m.extra1328 = {};
+  if (m.kind === 'serpent') {   // East Dragon: a gold crown with horns on the head, a dark mane down the body
+    const H = m.segs[0], gold = new THREE.MeshStandardMaterial({ color: '#e9b949', metalness: .8, roughness: .25 });
+    add(H, 'box', gold, 1.1, .25, .9, 0, .55, .2); for (const k of [-1, 1]) { add(H, 'coneHi', gold, .14, .9, .14, k * .4, .9, -.1, -.5, 0, -k * .35); add(H, 'coneHi', ph('#f4ecd8'), .1, .6, .1, k * .25, .8, .35, -.3, 0, -k * .2); add(H, 'sphereHi', gl('#ff2a2a'), .12, .12, .08, k * .3, .25, .55); }
+    m.segs.forEach((s, i) => { if (i % 2 || i === 0) return; add(s, 'coneHi', ph('#1a2a3a'), .16, .6, .16, 0, .55, 0, -.4); });
+    return; }
+  const root = m.root; root.updateMatrixWorld(true); const B = new THREE.Box3().setFromObject(root), S = B.getSize(new THREE.Vector3()), C = B.getCenter(new THREE.Vector3()), h = S.y, top = B.max.y, front = B.max.z, w = S.x;
+  const spine = (n, mat, sx, sy, z0 = .35, z1 = -.4, yk = .97) => { for (let i = 0; i < n; i++) { const t = i / (n - 1), z = C.z + S.z * (z0 + (z1 - z0) * t); add(root, 'coneHi', mat, sx, sy * (1 - Math.abs(t - .4) * .5), sx, C.x, top * yk - h * .04, z, -.25); } };
+  const head = m.heads && m.heads[0], legs = m.legs || [], arms = m.arms || [];
+  if (form === 'mammoth') { const armour = ph('#3a3a42', 110), gold = new THREE.MeshStandardMaterial({ color: '#c8a020', metalness: .7, roughness: .3 }), blue = gl('#5ad8ff');
+    for (const k of [-1, 1]) { add(root, 'box', armour, w * .08, h * .32, S.z * .45, C.x + k * w * .44, C.y + h * .08, C.z); add(root, 'box', gold, w * .085, h * .34, S.z * .04, C.x + k * w * .44, C.y + h * .08, C.z + S.z * .23); }
+    add(root, 'box', armour, w * .7, h * .06, S.z * .5, C.x, top - h * .1, C.z); spine(7, blue, w * .06, h * .22, .3, -.35);
+    for (const k of [-1, 1]) for (let i = 0; i < 2; i++) add(root, 'coneHi', blue, w * .05, h * .16, w * .05, C.x + k * w * .5, C.y + h * (.15 - i * .12), C.z + S.z * (.15 - i * .25), 0, 0, -k * 1.2);
+    legs.forEach(L => add(L, 'box', armour, w * .2, h * .18, w * .2, 0, -h * .2, 0)); if (head) for (const k of [-1, 1]) add(head, 'sphereHi', gl('#ff2a1a'), .18, .18, .1, k * .35, .2, .6); }
+  if (form === 'trex') { const bone = ph('#e8c84a', 40), brown = ph('#6a4a3a', 30);
+    if (head) { add(head, 'box', bone, 1.25, .6, 1.2, 0, .35, .2); for (let i = 0; i < 7; i++) add(head, 'coneHi', ph('#f8f4e8'), .1, .3, .1, -.45 + i * .15, -.15, .78, Math.PI); for (const k of [-1, 1]) add(head, 'coneHi', bone, .2, .6, .2, k * .45, .75, 0, 0, 0, -k * .4); }
+    spine(9, bone, w * .07, h * .2, .35, -.6); for (const k of [-1, 1]) add(root, 'box', brown, w * .1, h * .25, S.z * .3, C.x + k * w * .4, C.y, C.z); }
+  if (form === 'yeti') { const ice = new THREE.MeshPhongMaterial({ color: '#7ae0ff', emissive: '#1a6a9a', shininess: 140, flatShading: true, transparent: true, opacity: .92 }), chain = ph('#4a4a52', 100);
+    for (let i = 0; i < 9; i++) { const a = (i - 4) * .3; add(root, 'cone4', ice, w * .07, h * (.14 + (i % 3) * .05), w * .07, C.x + Math.sin(a) * w * .35, top - h * .22 - Math.abs(a) * h * .1, C.z - S.z * .35, -.6, 0, -a); }
+    arms.forEach(A => { for (let i = 0; i < 3; i++) add(A, 'torusHi', chain, w * .14, w * .14, w * .2, 0, -h * .32 - i * h * .025, 0, Math.PI / 2 + (i % 2) * .6); });
+    if (head) for (const k of [-1, 1]) { add(head, 'coneHi', ph('#c8a070'), .2, .7, .2, k * .45, .6, -.1, -.4, 0, -k * .8); add(head, 'sphereHi', gl('#5ad8ff'), .14, .1, .08, k * .25, .15, .6); }
+    add(root, 'box', ph('#2a2a3a'), w * .5, h * .14, S.z * .55, C.x, C.y - h * .05, C.z); add(root, 'box', gl('#5ad8ff'), w * .04, h * .2, .05, C.x, C.y + h * .18, front - S.z * .05); }
+  if (form === 'tiger') { const black = ph('#1a1208'), bandage = ph('#f4f0e8', 20);
+    for (let i = 0; i < 6; i++) add(root, 'box', black, w * .9, h * .03, S.z * .06, C.x, C.y + h * (.25 - i * .02), C.z + S.z * (.3 - i * .12), 0, 0, (i % 2 ? .2 : -.2));
+    legs.forEach(L => { add(L, 'cylHi', bandage, w * .16, h * .06, w * .16, 0, -h * .16, 0); add(L, 'cylHi', bandage, w * .16, h * .04, w * .16, 0, -h * .23, 0); }); X.feetFire = '#ff6a1a'; }
+  if (form === 'venom') { (m.heads || []).slice(0, 3).forEach(H => { for (const k of [-1, 1]) { add(H, 'coneHi', ph('#1a0a2a'), .14, .55, .14, k * .3, .5, -.1, -.4, 0, -k * .3); add(H, 'coneHi', ph('#f8f4e8'), .07, .22, .07, k * .16, -.2, .6, Math.PI); } add(H, 'sphereHi', gl('#ff4fd8'), .3, .1, .06, 0, .15, .62); });
+    X.drip = '#b05aff'; }
+  if (form === 'phoenix') { const f1 = gl('#3fc6ff', .75), f2 = gl('#bff4ff', .85), gold = gl('#ffc83a');
+    (m.wings || []).forEach(W => { const sd = Math.sign(W.position.x) || 1; for (let i = 0; i < 6; i++) { const b = add(W, 'coneHi', i % 2 ? f2 : f1, w * .05, h * (.5 - i * .05), w * .02, sd * w * (.12 + i * .08), -h * .05 * i, 0, 0, 0, -sd * (1.2 + i * .12)); b.renderOrder = 2; } });
+    const hd = head || root; for (let i = 0; i < 5; i++) add(hd, 'coneHi', gold, .14, .55, .14, (i - 2) * .16, head ? .55 : top, head ? -.1 : C.z, 0, 0, (i - 2) * .3); X.trail = '#ffc83a'; }
+  if (form === 'kitsune' || m.kind === 'fox') { add(root, 'torusHi', ph('#c8202a', 40), w * .62, w * .62, w * .5, C.x, C.y + h * .12, C.z, Math.PI / 2 - .2);
+    (m.tails || []).forEach(t => { const g = new THREE.Mesh(GEO.sphereHi, gl('#7af0ff')); g.scale.setScalar(.7); g.position.y = 2.4; t.add(g); });
+    const ring = new THREE.Group(); ring.position.set(C.x, C.y + h * .7, C.z); ring.scale.setScalar(1.9); root.add(ring); X.spin = ring;   // spirit demons: little blue ghosts with gaping mouths circling the fox
+    for (let i = 0; i < 8; i++) { const a = i / 8 * TAU, d = new THREE.Group(); d.position.set(Math.cos(a) * w * 1.1, Math.sin(a * 3) * h * .15, Math.sin(a) * w * 1.1); ring.add(d); add(d, 'sphereHi', gl('#2a4aff', .85), w * .14, w * .16, w * .14, 0, 0, 0);
+      add(d, 'sphereHi', gl('#ffffff'), w * .03, w * .045, .02, -w * .035, w * .03, w * .065); add(d, 'sphereHi', gl('#ffffff'), w * .03, w * .045, .02, w * .035, w * .03, w * .065); add(d, 'sphereHi', gl('#0a0a1a'), w * .05, w * .06, .02, 0, -w * .035, w * .068); } }
+  if (m.kind === 'wyvern') { const armour = ph('#16161c', 120), lava = gl('#ff7a1a');
+    if (m.body) { for (const k of [-1, 1]) { add(m.body, 'box', armour, .35, 1.6, 3.2, k * 1.72, 3.3, 0); for (let i = 0; i < 3; i++) add(m.body, 'box', lava, .1, .12, 1.1, k * 1.92, 3.7 - i * .45, (i - 1) * .8, (i % 2 ? .3 : -.3)); } add(m.body, 'box', armour, 2.6, .35, 3.6, 0, 4.75, 0); add(m.body, 'box', lava, .2, .1, 3.2, 0, 4.95, 0); }
+    (m.wings || []).forEach(W => { const sd = W.userData.k || 1; add(W, 'box', armour, 2.6, .35, 1.1, sd * 2.6, .25, -.3); add(W, 'box', lava, 2.2, .1, .12, sd * 2.6, .45, .2); });
+    if (m.head) { add(m.head, 'box', armour, 1.9, .5, 1.9, 0, .7, .1); for (const k of [-1, 1]) for (let i = 0; i < 2; i++) add(m.head, 'coneHi', ph('#c8a070'), .26, 1.1 - i * .3, .26, k * (.5 + i * .25), 1.2, -.3 - i * .3, -.7, 0, -k * .3); add(m.head, 'box', lava, 1.2, .1, .1, 0, .75, 1.05); } }
+}
+const _buildFormModel1328 = buildFormModel;
+buildFormModel = function (form) { const m = _buildFormModel1328(form); if (m) try { formExtras1328(form, m); } catch (e) {} return m; };
+const _syncFormModel1328 = syncFormModel;
+syncFormModel = function (pX, pY, pBase, scaleMul, P = player, slot = mySlot) { const r = _syncFormModel1328(pX, pY, pBase, scaleMul, P, slot); const m = slot && slot.m, X = m && m.extra1328;
+  if (X) { if (X.spin) X.spin.rotation.y = time * 1.3; const moving = Math.hypot(P.vx, P.vy) > 20;
+    if (X.feetFire && moving && Math.random() < .7) fx.sparks.push({ x: P.x + rand(-30, 30), y: P.y + rand(-30, 30), z: rand(0, 8), vx: 0, vy: 0, vz: rand(40, 100), t: 0, life: .45, color: Math.random() < .5 ? '#ff6a1a' : '#ffd23a' });
+    if (X.trail && Math.random() < .8) fx.sparks.push({ x: P.x + rand(-20, 20), y: P.y + rand(-20, 20), z: rand(10, 40), vx: 0, vy: 0, vz: -rand(30, 80), t: 0, life: .6, color: X.trail });
+    if (X.drip && Math.random() < .4) fx.sparks.push({ x: P.x + rand(-30, 30), y: P.y + rand(-30, 30), z: rand(10, 40), vx: 0, vy: 0, vz: -60, t: 0, life: .5, color: X.drip }); }
+  return r; };
+Object.assign(TRANSFORMS.kitsune, { color: '#7a5aff', tint: ['#4a2a8a', '#7af0ff', '#7af0ff'] });
 // ================= REVAMP: the game platform. Accounts, avatar, a library of 52 games; Demon Conqueror runs in this same page =================
 const RV = { open: true, user: null, prof: null, sock: null, game: null, lastPush: 0, pushT: null };
 window.RV_PAUSE = true;
@@ -11229,7 +11283,7 @@ RV_ENGINES.puzzle = h => { const S = h.save, F = h.fl, N = 8; S.lvl ||= 1; S.sta
 // ---------- desktop app (Windows / Mac): progress also saved to a file, and the app updates itself from GitHub ----------
 // Same pipeline as Isle of Six Crowns: update.json + resources.neu on GitHub; a newer package downloads in the background,
 // installs when you close the game (or straight away on the main menu / with the Update button), and your saves are kept.
-const APP_VERSION = '13.27.0';
+const APP_VERSION = '13.28.0';
 const UPDATE_REPO = 'seiyahuang88/Demon_Conqueror';
 const UPDATE_URL = `https://raw.githubusercontent.com/${UPDATE_REPO}/main/update.json`, UPDATE_API = `https://api.github.com/repos/${UPDATE_REPO}/contents/`;
 const SITE_URL = 'https://seiyahuang88.github.io/Demon_Conqueror/';
